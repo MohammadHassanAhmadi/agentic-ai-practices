@@ -1,3 +1,6 @@
+import json
+
+
 class Color:
     RED = "\033[31m"
 
@@ -24,3 +27,21 @@ def print_color(text: str, color: str):
 
     with open("output.txt", "a", encoding="utf-8") as file:
         file.write(f"{text}\n")
+
+
+def parse_json_string(json_string: str) -> dict:
+
+    try:
+        return json.loads(json_string)
+
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON string: {json_string}") from e
+
+
+def to_pretty_json(data) -> str:
+
+    dt = data
+    if hasattr(dt, "model_dump"):
+        dt = dt.model_dump()
+
+    return json.dumps(dt, indent=2, default=str)
