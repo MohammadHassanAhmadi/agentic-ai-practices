@@ -3,6 +3,9 @@ from typing import Any
 
 from shared_tools import utiles
 
+WORKSPACE_PATH = (Path(__file__).parent / "workspace").resolve()
+# resolve is getFullPath
+
 
 def safe_path(path: str) -> Path:
     """Resolve a user-supplied path and ensure it stays inside the workspace."""
@@ -132,6 +135,8 @@ TOOLS_DICT = {
     "delete_file": delete_file,
 }
 
+NEEDS_APPROVAL = {"write_file", "delete_file"}
+
 
 def call_tool(tool_name: str, arg_json_str: str) -> Any:
     try:
@@ -140,6 +145,13 @@ def call_tool(tool_name: str, arg_json_str: str) -> Any:
             raise ValueError(f"unknown tool: {tool_name}")
 
         arguments = utiles.parse_json_string(arg_json_str)
+        if tool_name in NEEDS_APPROVAL:
+            user_answer = input(
+                f"Approve {tool_name} on {arguments}(Yes /otherwise no)"
+            )
+            if user_answer.strip().lower() != "yes":
+                return f"User denied to {tool_name} on {arguments}"
+
         result = tool_function(**arguments)
         arguments_text = ", ".join(
             f"{key}={value!r}" for key, value in arguments.items()
@@ -148,7 +160,7 @@ def call_tool(tool_name: str, arg_json_str: str) -> Any:
             f"tool_called: {tool_name}({arguments_text}) => {result}",
             utiles.Color.YELLOW,
         )
-
+        return result
     except Exception as e:
         result = f"Error: {type(e).__name__}: {e}"
         utiles.print_color(

@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import tools
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -22,4 +23,4 @@ model = get_env_var("AZURE_OPENAI_MODEL")
 client = OpenAI(api_key=openai_api_key, base_url=openai_endpoint)
 
 # create workspace on startup as sandbox
-Path("workspace").mkdir(exist_ok=True)
+Path(tools.WORKSPACE_PATH).mkdir(exist_ok=True)
