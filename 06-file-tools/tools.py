@@ -146,9 +146,7 @@ def call_tool(tool_name: str, arg_json_str: str) -> Any:
 
         arguments = utiles.parse_json_string(arg_json_str)
         if tool_name in NEEDS_APPROVAL:
-            user_answer = input(
-                f"Approve {tool_name} on {arguments}(Yes /otherwise no)"
-            )
+            user_answer = input(f"Approve {tool_name} on {arguments}[yes/no]?")
             if user_answer.strip().lower() != "yes":
                 return f"User denied to {tool_name} on {arguments}"
 

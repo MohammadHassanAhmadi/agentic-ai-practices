@@ -1,0 +1,6 @@
+[project]
+name = "agentic-ai-practices"
+version = "0.1.0"
+
+[tool.setuptools]
+packages = ["shared_tools"]

@@ -245,7 +245,7 @@ def run_agent_loop(user_input: str, history_messages: list) -> str | None:
 
     print_color(f"message count: {len(history_messages)}", Color.PURPLE)
 
-    print_color(f"user input: {user_input}", Color.RED)
+    
 
     user_prompt = {"role": "user", "content": user_input}
 
