@@ -230,7 +230,8 @@ def call_tool(tool_name: str, arg_json_str: str) -> dict:
             "ok": False,
             "error": {"code": ErrorCode.FILE_NOT_FOUND, "message": str(e)},
         }
-    except Exception:
+    except Exception as e:
+        utiles.print_color(f"[INTERNAL] {tool_name} failed: {e!r}", utiles.Color.RED)
         return {
             "ok": False,
             "error": {
