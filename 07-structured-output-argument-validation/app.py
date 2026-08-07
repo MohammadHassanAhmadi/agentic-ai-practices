@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -36,6 +37,7 @@ Rules:
 - If a tool returns an error, explain it in plain words. Do not invent a result.
 - Older messages may have been removed from your history. If you are not sure, say you do not know instead of guessing.
 
+If a tool result contains approved: false, the user declined the action. Tell the user it was not done. Do not call the tool again with the same arguments.
 Keep your answers short."""
 
 
@@ -76,15 +78,16 @@ while True:
                     continue
 
                 result = tools.call_tool(item.name, item.arguments)
+
                 tool_was_called = True
                 history_messages.append(
                     {
                         "type": "function_call_output",
                         "call_id": item.call_id,
-                        "output": result,
+                        "output": json.dumps(result),
                     }
                 )
-                print_color(f"[TOOL]: {result}", Color.BLUE)
+                print_color(f"[TOOL]: {result}", Color.GRAY)
 
             if not tool_was_called:
                 print_color(f"[AGENT]: {llm_resp.output_text}", Color.GREEN)

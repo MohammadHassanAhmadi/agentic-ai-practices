@@ -33,3 +33,5 @@ htmlcov/
 Thumbs.db
 
 output.txt
+workspace
+workspace/**
