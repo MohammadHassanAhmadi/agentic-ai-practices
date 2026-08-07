@@ -1,0 +1,9 @@
+{
+  "editor.fontSize": 10,
+  "terminal.integrated.fontSize": 10,
+  "editor.tabSize": 2,
+  "files.autoSave": "afterDelay",
+  "editor.minimap.enabled": false,
+  "workbench.iconTheme": "vs-minimal",
+  "workbench.colorTheme": "Default Dark Modern"
+}

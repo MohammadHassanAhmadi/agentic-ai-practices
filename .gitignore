@@ -25,7 +25,8 @@ htmlcov/
 .env.*
 
 # IDE / editor settings
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 
 # OS files
