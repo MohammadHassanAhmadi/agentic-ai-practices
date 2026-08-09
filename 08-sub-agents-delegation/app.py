@@ -2,6 +2,7 @@ import json
 import os
 from dataclasses import dataclass, field
 from enum import StrEnum
+from typing import Any
 
 import tools
 from dotenv import load_dotenv
@@ -12,6 +13,9 @@ from shared_tools.utiles import Color, print_color
 
 load_dotenv(override=True)
 
+MAX_ATTEMPTS = 5
+MAX_DEPTH = 1
+
 
 def get_env_var(variable_name: str) -> str:
     value = os.getenv(variable_name)
@@ -21,7 +25,7 @@ def get_env_var(variable_name: str) -> str:
     return value
 
 
-# create workspace on startup as sandbox
+# Create the sandbox workspace when the app starts.
 tools.WORKSPACE_PATH.mkdir(exist_ok=True)
 
 openai_api_key = get_env_var("AZURE_OPENAI_API_KEY")
@@ -47,17 +51,13 @@ class AgentRun:
     tools_called: list[str] = field(default_factory=list)
 
 
-def append_to_history_safely(history: list, items) -> list:
+def append_to_history(history: list[Any], items: Any) -> None:
     if isinstance(items, list):
         history.extend(items)
     else:
         history.append(items)
 
-    return history
 
-
-MAX_TRY_ATTEMPT = 5
-MAX_DEPTH = 1
 CALL_SUB_AGENT_SCHEMA = {
     "type": "function",
     "name": "call_sub_agent",
@@ -81,8 +81,7 @@ CALL_SUB_AGENT_SCHEMA = {
 }
 
 
-def call_sub_agent(agent_name, task, depth):
-
+def call_sub_agent(agent_name: str, task: str, depth: int) -> AgentRun:
     if depth + 1 > MAX_DEPTH:
         return AgentRun(
             status=RunStatus.FAILED,
@@ -104,7 +103,7 @@ def call_sub_agent(agent_name, task, depth):
         system_prompt=agent["prompt"],
         task=task,
         tool_schemas=agent["tool_schemas"],
-        max_iterations=MAX_TRY_ATTEMPT,  # for now the same as main agent, but could be different
+        max_iterations=MAX_ATTEMPTS,
         depth=depth + 1,
     )
 
@@ -128,8 +127,7 @@ ORCHESTRATOR_TOOL_SCHEMAS = [
 ]
 
 
-def to_result_envelop(run: AgentRun) -> dict:
-
+def to_result_envelope(run: AgentRun) -> dict:
     if run.status == RunStatus.SUCCESS:
         return {
             "ok": True,
@@ -140,14 +138,13 @@ def to_result_envelop(run: AgentRun) -> dict:
                 "tools_called": run.tools_called,
             },
         }
-    else:
-        return {
-            "ok": False,
-            "error": {
-                "code": run.error_code or "SUB_AGENT_STOPPED",
-                "message": run.result,
-            },
-        }
+    return {
+        "ok": False,
+        "error": {
+            "code": run.error_code or "SUB_AGENT_STOPPED",
+            "message": run.result,
+        },
+    }
 
 
 def run_agent(
@@ -155,18 +152,16 @@ def run_agent(
     system_prompt: str,
     task: str,
     tool_schemas: list,
-    max_iterations: int = MAX_TRY_ATTEMPT,
+    max_iterations: int = MAX_ATTEMPTS,
     depth: int = 0,
 ) -> AgentRun:
 
-    history_messages = []
-    tools_called = []
-    failed_delegations = set()
+    history_messages: list[Any] = []
+    tools_called: list[str] = []
+    failed_delegations: set[tuple[str, str]] = set()
 
     try:
-        user_prompt = {"role": "user", "content": task}
-
-        append_to_history_safely(history_messages, user_prompt)
+        append_to_history(history_messages, {"role": "user", "content": task})
 
         for agent_attempt in range(max_iterations):
             print_color(
@@ -182,7 +177,8 @@ def run_agent(
             )
 
             tool_was_called = False
-            append_to_history_safely(history_messages, llm_resp.output)
+            append_to_history(history_messages, llm_resp.output)
+
             for item in llm_resp.output:
                 if item.type != "function_call":
                     continue
@@ -203,7 +199,7 @@ def run_agent(
                             task=arguments["task"],
                             depth=depth,
                         )
-                    result = to_result_envelop(run)
+                    result = to_result_envelope(run)
 
                     if run.status != RunStatus.SUCCESS:
                         failed_delegations.add(key)
@@ -213,7 +209,7 @@ def run_agent(
 
                 tool_was_called = True
                 tools_called.append(item.name)
-                append_to_history_safely(
+                append_to_history(
                     history_messages,
                     {
                         "type": "function_call_output",
@@ -238,7 +234,7 @@ def run_agent(
         return AgentRun(
             status=RunStatus.STOPPED,
             result="Max iterations reached",
-            iterations=MAX_TRY_ATTEMPT,
+            iterations=max_iterations,
             tools_called=tools_called,
         )
     except KeyboardInterrupt:
@@ -260,21 +256,22 @@ def run_agent(
         )
 
 
-# while True: # for when you want real app
-
-for prompt in [
-    "Ask the reader agent to delegate the reading of notes.txt to another reader agent. The reader must not read the file itself."
-]:
-    # print_color("How can I help?", Color.GREEN)
+def main() -> None:
+    prompt = (
+        "Ask the reader agent to delegate the reading of notes.txt to another "
+        "reader agent. The reader must not read the file itself."
+    )
     print_color(f"[User prompt]:\n{prompt}", Color.GREEN)
-    # prompt = input("Enter prompt:\n")
-    main_task_result = run_agent(
-        agent_name="Orchestrator",
+
+    result = run_agent(
+        agent_name="orchestrator",
         system_prompt=ORCHESTRATOR_SYSTEM_PROMPT,
         task=prompt,
         tool_schemas=ORCHESTRATOR_TOOL_SCHEMAS,
-        max_iterations=MAX_TRY_ATTEMPT,
         depth=0,
     )
+    print(result.result)
 
-    print(main_task_result.result)
+
+if __name__ == "__main__":
+    main()

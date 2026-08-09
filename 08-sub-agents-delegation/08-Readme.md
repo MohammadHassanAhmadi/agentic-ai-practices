@@ -97,7 +97,7 @@ regardless of depth.
 app.py             run_agent, call_sub_agent, AGENTS registry, tool schemas
 tools.py           file tools, call_tool, envelope, ToolError, approval gate
 system_prompts.py  ORCHESTRATOR_SYSTEM_PROMPT, READER_SYSTEM_PROMPT
-tests.py           test inputs
+inputs.py          test inputs
 workspace/         the sandbox
 ```
 

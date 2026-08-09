@@ -4,7 +4,7 @@ from pathlib import Path
 from shared_tools import utiles
 
 WORKSPACE_PATH = (Path(__file__).parent / "workspace").resolve()
-# resolve is getFullPath
+MAX_BYTES = 8192
 
 
 def safe_path(path: str) -> Path:
@@ -22,13 +22,12 @@ def safe_path(path: str) -> Path:
 
 def list_files() -> dict:
     """List all files in the workspace."""
-    workspace_path = WORKSPACE_PATH
     files = [
         {"name": file.name, "size": file.stat().st_size}
-        for file in workspace_path.iterdir()
+        for file in WORKSPACE_PATH.iterdir()
         if file.is_file()
     ]
-    if len(files) == 0:
+    if not files:
         return {
             "files": [],
             "file_count": 0,
@@ -88,17 +87,14 @@ def search_files(query: str, max_results: int = 0) -> dict:
     }
 
 
-MAX_BYTES = 8192
-
-
 def read_file(path: str) -> dict:
-    file_safe_path = safe_path(path)
+    safe_file_path = safe_path(path)
     try:
-        total_bytes = file_safe_path.stat().st_size
+        total_bytes = safe_file_path.stat().st_size
 
         if total_bytes > MAX_BYTES:
-            with open(file_safe_path, "rb") as f:
-                chunk = f.read(MAX_BYTES)
+            with open(safe_file_path, "rb") as file:
+                chunk = file.read(MAX_BYTES)
             content = chunk.decode("utf-8", errors="ignore")
             return {
                 "content": content,
@@ -107,7 +103,7 @@ def read_file(path: str) -> dict:
                 "total_bytes": total_bytes,
             }
 
-        content = file_safe_path.read_text(encoding="utf-8")
+        content = safe_file_path.read_text(encoding="utf-8")
         return {
             "content": content,
             "truncated": False,
@@ -272,7 +268,6 @@ class ToolError(Exception):
 
 
 def call_tool(tool_name: str, arg_json_str: str) -> dict:
-
     try:
         tool_function = TOOL_FUNCTIONS.get(tool_name)
         if tool_function is None:
@@ -284,7 +279,9 @@ def call_tool(tool_name: str, arg_json_str: str) -> dict:
         arguments = utiles.parse_json_string(arg_json_str)
 
         if tool_name in NEEDS_APPROVAL_TOOLS:
-            user_answer = input(f"Approve {tool_name} on {arguments}[yes/no]?")
+            user_answer = input(
+                f"Approve {tool_name} with {arguments}? Type yes or no: "
+            )
             if user_answer.strip().lower() != "yes":
                 return {
                     "ok": True,
