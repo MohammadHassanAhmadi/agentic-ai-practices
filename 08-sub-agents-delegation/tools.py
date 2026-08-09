@@ -76,14 +76,12 @@ def search_files(query: str, max_results: int = 0) -> dict:
                 if max_results > 0 and len(matches) >= max_results:
                     truncated = True
                     return {
-                        "ok": True,
                         "matches": matches,
                         "match_count": len(matches),
                         "truncated": truncated,
                     }
 
     return {
-        "ok": True,
         "matches": matches,
         "match_count": len(matches),
         "truncated": truncated,
@@ -264,6 +262,7 @@ class ErrorCode(str, Enum):
     INTERNAL_ERROR = "INTERNAL_ERROR"
     INVALID_ARGUMENTS = "INVALID_ARGUMENTS"
     DELEGATION_NOT_ALLOWED = "DELEGATION_NOT_ALLOWED"
+    DUPLICATE_DELEGATION = "DUPLICATE_DELEGATION"
 
 
 class ToolError(Exception):

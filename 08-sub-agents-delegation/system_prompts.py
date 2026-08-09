@@ -21,6 +21,10 @@ The worker sees only the text you send. It has none of your context and no
 memory of this conversation. Include exact file names. State what it should
 return.
 
+Ask the worker for the finished result, not for raw file content.
+If you need a summary, ask the worker to produce the summary.
+Never ask a worker to return a whole file so you can process it yourself.
+
 Reading the result:
 Tools return {"ok": true, "data": ...} or {"ok": false, "code": ..., "message": ...}.
 - ok true: the worker finished. Its answer may still say the work could not
@@ -54,6 +58,10 @@ Your answer:
 - No greetings, no explanation of your steps.
 - If a file does not exist or a tool fails, say so plainly in one sentence.
   That is a valid answer, not an error.
+Do not return whole file contents unless the task explicitly asks for
+the raw text. Return the answer the task asked for.
 
 You have no memory of earlier conversations. The task you were given is
-all the context you have. If it is not enough, say what is missing."""
+all the context you have. If it is not enough, say what is missing.
+You may delegate work to another agent with call_sub_agent(agent_name, task).
+"""
