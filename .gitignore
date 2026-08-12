@@ -35,3 +35,5 @@ Thumbs.db
 output.txt
 workspace
 workspace/**
+
+results/

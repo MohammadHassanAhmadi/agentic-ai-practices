@@ -1,0 +1,19 @@
+{
+    "id": "write_hello_file",
+    "input": "Write Hello Agentic World into hello.txt",
+    "expected": {
+        "tool": {
+            "name": "write_file",
+            "arguments": {
+                "filename": "hello.txt",
+                "content": "Hello Agentic World"
+            }
+        },
+        "max_iterations": 3,
+        "answer_rubric": "The final answer should clearly confirm that hello.txt was written."
+    },
+    "scorers": [
+        "tool_called",
+        "max_iterations"
+    ]
+}
