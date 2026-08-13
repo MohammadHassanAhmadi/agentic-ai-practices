@@ -1,0 +1,22 @@
+{
+    "id": "delete_file",
+    "input": "Delete hello.txt",
+    "setup": {
+        "create_files": {
+            "hello.txt": "temporary content"
+        }
+    },
+    "expected": {
+        "tool_calls": [
+            {
+                "name": "delete_file",
+                "arguments": {
+                    "filename": "hello.txt"
+                }
+            }
+        ]
+    },
+    "scorers": [
+        "tool_calls"
+    ]
+}

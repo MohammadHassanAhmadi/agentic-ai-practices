@@ -1,0 +1,8 @@
+{
+    "id": "bad_case",
+    "input": "Write hello",
+    "expected": {},
+    "scorers": [
+        "tool_called"
+    ]
+}

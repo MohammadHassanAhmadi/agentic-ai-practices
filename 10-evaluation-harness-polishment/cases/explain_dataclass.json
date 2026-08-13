@@ -1,0 +1,13 @@
+{
+    "id": "explain_dataclass",
+    "input": "Explain Python dataclass in a simple and short way.",
+    "expected": {
+        "answer_rubric": "The answer must be technically correct, simple, short, and understandable for a C# developer who is new to Python.",
+        "max_iterations": 1
+    },
+    "scorers": [
+        "llm_judge",
+        "tool_order",
+        "max_iterations"
+    ]
+}
