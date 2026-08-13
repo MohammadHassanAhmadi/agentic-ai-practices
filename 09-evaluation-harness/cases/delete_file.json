@@ -1,0 +1,14 @@
+{
+    "id": "delete_file",
+    "input": "Delete hello.txt",
+    "expected": {
+        "tool": {
+            "name": "delete_file"
+        },
+        "max_iterations": 3
+    },
+    "scorers": [
+        "tool_called",
+        "max_iterations"
+    ]
+}

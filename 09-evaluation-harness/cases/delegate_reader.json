@@ -1,0 +1,14 @@
+{
+    "id": "delegate_reader",
+    "input": "Ask the reader agent to read notes.txt and tell me what it contains.",
+    "expected": {
+        "tool": {
+            "name": "call_sub_agent"
+        },
+        "max_iterations": 4
+    },
+    "scorers": [
+        "tool_called",
+        "max_iterations"
+    ]
+}
