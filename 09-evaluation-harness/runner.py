@@ -2,7 +2,7 @@ import argparse
 import json
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from statistics import mean
 from typing import Any, Protocol
@@ -10,7 +10,7 @@ from typing import Any, Protocol
 from app import AgentRun, RunStatus, client, model, run_agent_for_runner
 
 
-class ScoreStatus(Enum):
+class ScoreStatus(StrEnum):
     PASS = "pass"
     FAIL = "fail"
     ERROR = "error"
@@ -203,8 +203,8 @@ def main():
             pass_rate=mean(run.status == ScoreStatus.PASS for run in run_evaluations),
             avg_iterations=mean(run.iterations for run in run_evaluations),
             max_iterations=max(run.iterations for run in run_evaluations),
-            run_evaluations=run_evaluations,
             passed=sum(run.status == ScoreStatus.PASS for run in run_evaluations),
+            run_evaluations=run_evaluations,
             errors=sum(run.status == ScoreStatus.ERROR for run in run_evaluations),
             failed=sum(run.status == ScoreStatus.FAIL for run in run_evaluations),
         )
