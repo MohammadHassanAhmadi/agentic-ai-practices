@@ -1,6 +1,9 @@
 import json
 
 
+import sys
+
+
 class Color:
     RED = "\033[31m"
 
@@ -17,6 +20,15 @@ class Color:
     PINK = "\033[95m"
 
     RESET = "\033[0m"
+
+    WHITE = "\033[37m"
+
+
+def configure_utf8_output() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="replace")
 
 
 def print_color(text: str, color: str):

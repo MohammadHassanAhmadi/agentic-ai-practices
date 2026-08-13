@@ -1,0 +1,20 @@
+{
+    "id": "write_file",
+    "input": "Write Hello Agentic World into hello.txt",
+    "expected": {
+        "tool_calls": [
+            {
+                "name": "write_file",
+                "arguments": {
+                    "path": "hello.txt",
+                    "content": "Hello Agentic World"
+                }
+            }
+        ],
+        "max_iterations": 3
+    },
+    "scorers": [
+        "tool_called",
+        "max_iterations"
+    ]
+}

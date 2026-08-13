@@ -1,0 +1,27 @@
+{
+    "id": "write_then_delete",
+    "input": "First write the exact text 'temporary content' to order_test.txt. After the write succeeds, delete order_test.txt. Do not reverse or skip these steps.",
+    "expected": {
+        "tool_calls": [
+            {
+                "name": "write_file",
+                "arguments": {
+                    "path": "order_test.txt",
+                    "content": "temporary content"
+                }
+            },
+            {
+                "name": "delete_file",
+                "arguments": {
+                    "path": "order_test.txt"
+                }
+            }
+        ],
+        "max_iterations": 4
+    },
+    "scorers": [
+        "tool_called",
+        "tool_order",
+        "max_iterations"
+    ]
+}
