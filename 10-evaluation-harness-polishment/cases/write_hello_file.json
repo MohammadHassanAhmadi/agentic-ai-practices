@@ -6,7 +6,7 @@
             {
                 "name": "write_file",
                 "arguments": {
-                    "filename": "hello.txt",
+                    "path": "hello.txt",
                     "content": "Hello Agentic World"
                 }
             }
@@ -14,8 +14,7 @@
         "max_iterations": 3
     },
     "scorers": [
-        "tool_call",
-        "tool_order",
+        "tool_called",
         "max_iterations"
     ]
 }

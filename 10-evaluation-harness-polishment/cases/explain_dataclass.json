@@ -7,7 +7,6 @@
     },
     "scorers": [
         "llm_judge",
-        "tool_order",
         "max_iterations"
     ]
 }

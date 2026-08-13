@@ -1,5 +1,6 @@
 import argparse
 import json
+import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import StrEnum
@@ -7,10 +8,15 @@ from pathlib import Path
 from statistics import mean
 from typing import Protocol
 
+import tools
 from app import AgentRun, RunStatus, ToolCall, client, model, run_agent_for_runner
 from pydantic import BaseModel
 
 from shared_tools.utiles import Color, print_color
+
+BASE_DIR = Path(__file__).resolve().parent
+CASES_DIR = BASE_DIR / "cases"
+RESULTS_DIR = BASE_DIR / "results"
 
 
 class ScoreStatus(StrEnum):
@@ -62,9 +68,43 @@ class LLMJudgeResult(BaseModel):
     score: float
 
 
+@dataclass
+class WorkspaceSnapshot:
+    files: dict[Path, bytes]
+    directories: set[Path]
+
+
+def setup_case(case: TestCase) -> None:
+    if not case.setup:
+        return
+
+    create_files = case.setup.get("create_files", {})
+
+    for filename, content in create_files.items():
+        file_path = tools.safe_path(filename)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text(content, encoding="utf-8")
+
+
+def cleanup_case(case: TestCase) -> None:
+    if not case.setup:
+        return
+
+    create_files = case.setup.get("create_files", {})
+
+    for filename in create_files:
+        file_path = tools.WORKSPACE_PATH / filename
+
+        if file_path.exists():
+            file_path.unlink()
+
+
 def has_exact_call_order(
     expected_calls: list[ToolCall], actual_calls: list[ToolCall]
 ) -> bool:
+    if not expected_calls:
+        return False
+
     expected_index = 0
 
     for actual in actual_calls:
@@ -106,27 +146,33 @@ class ToolOrderScorer:
 
 class ToolCallScorer:
     def score(self, case: TestCase, result: AgentRun) -> ScoreResult:
-        scorer = "tool_calls"
+        scorer = "tool_called"
         expected_calls = case.expected.tool_calls
 
-        if expected_calls is None:
+        if not expected_calls:
             return ScoreResult(
                 reason="Expected tool_calls are missing",
                 scorer=scorer,
                 status=ScoreStatus.ERROR,
             )
 
+        matched_actual_indexes: set[int] = set()
+
         for expected in expected_calls:
             matched = False
 
-            for actual in result.tools_called:
-                same_name = actual.name == expected.name
+            for index, actual in enumerate(result.tools_called):
+                if index in matched_actual_indexes:
+                    continue
 
-                same_arguments = (
-                    not expected.arguments or expected.arguments == expected.arguments
+                same_name = actual.name == expected.name
+                same_arguments = not expected.arguments or all(
+                    actual.arguments.get(name) == value
+                    for name, value in expected.arguments.items()
                 )
                 if same_name and same_arguments:
                     matched = True
+                    matched_actual_indexes.add(index)
                     break
 
             if not matched:
@@ -137,7 +183,7 @@ class ToolCallScorer:
                 )
 
         return ScoreResult(
-            scorer="tool_calls",
+            scorer=scorer,
             status=ScoreStatus.PASS,
             reason="All expected tool calls were found",
         )
@@ -151,6 +197,7 @@ class RunEvaluation:
     status: ScoreStatus
     scores: list[ScoreResult]
     iterations: int
+    duration_seconds: float
     reason: str = ""
 
 
@@ -165,6 +212,7 @@ class CaseResult:
     avg_iterations: float
     max_iterations: int
     run_evaluations: list[RunEvaluation]
+    avg_duration_seconds: float
 
 
 class MaxIterationsScorer:
@@ -174,14 +222,14 @@ class MaxIterationsScorer:
         if expected_max_iterations is None:
             return ScoreResult(
                 reason="max_iterations is missing",
-                scorer="max_iteration",
+                scorer="max_iterations",
                 status=ScoreStatus.ERROR,
             )
 
         passed = expected_max_iterations >= result.iterations
 
         return ScoreResult(
-            scorer="max_iteration",
+            scorer="max_iterations",
             status=ScoreStatus.PASS if passed else ScoreStatus.FAIL,
             reason=(
                 f"{result.iterations} <= {expected_max_iterations}"
@@ -242,12 +290,21 @@ SCORERS = {
 def validate_case(case: TestCase) -> list[str]:
     errors: list[str] = []
 
+    if not case.id.strip():
+        errors.append("id must not be empty")
+
+    if not case.input.strip():
+        errors.append("input must not be empty")
+
+    if not case.scorer:
+        errors.append("At least one scorer is required")
+
     for scorer_name in case.scorer:
         if scorer_name not in SCORERS:
             errors.append(f"Unknown scorer: {scorer_name}")
 
     if "tool_called" in case.scorer and not case.expected.tool_calls:
-        errors.append("tool_called requires expected.tool")
+        errors.append("tool_called requires expected.tool_calls")
 
     if "tool_order" in case.scorer and len(case.expected.tool_calls) < 2:
         errors.append("tool_order requires at least 2 expected tool calls")
@@ -266,60 +323,143 @@ def parse_test_case(data: dict) -> TestCase:
     tool_calls_data = data["expected"].get("tool_calls")
     expected_tool_calls: list[ToolCall] = []
     if tool_calls_data:
-        print_color(f"tools data from test case json:{tool_calls_data}", Color.GRAY)
         expected_tool_calls = [ToolCall(**tool_data) for tool_data in tool_calls_data]
 
     expected = Expected(
-        tool=expected_tool_calls,
+        tool_calls=expected_tool_calls,
         max_iterations=data["expected"].get("max_iterations"),
         answer_rubric=data["expected"].get("answer_rubric"),
     )
 
     return TestCase(
-        id=data["id"], input=data["input"], expected=expected, scorer=data["scorers"]
+        id=data["id"],
+        input=data["input"],
+        expected=expected,
+        scorer=data["scorers"],
+        setup=data.get("setup"),
     )
 
 
-def load_cases() -> list[TestCase]:
+def load_cases(cases_dir: Path = CASES_DIR) -> list[TestCase]:
     cases: list[TestCase] = []
-    for file in Path("cases").glob("*.json"):
-        data = json.loads(file.read_text())
-        cases.append(parse_test_case(data))
+    for file in sorted(cases_dir.glob("*.json")):
+        try:
+            data = json.loads(file.read_text(encoding="utf-8"))
+            cases.append(parse_test_case(data))
+        except (
+            OSError,
+            json.JSONDecodeError,
+            KeyError,
+            TypeError,
+            ValueError,
+        ) as error:
+            print_color(
+                f"{file.name}: INVALID — {type(error).__name__}: {error}",
+                Color.RED,
+            )
 
     return cases
 
 
 def save_report(case_results: list[CaseResult], overall_pass_rate: float):
-    Path("results").mkdir(exist_ok=True)
+    RESULTS_DIR.mkdir(exist_ok=True)
 
     report = {
         "overall_pass_rate": overall_pass_rate,
-        "case": [asdict(result) for result in case_results],
+        "cases": [asdict(result) for result in case_results],
     }
 
-    filename = datetime.now().strftime("run_%Y%m%d_%H%M%S.json")
-    Path("results", filename).write_text(json.dumps(report, indent=2))
+    filename = datetime.now().strftime("run_%Y%m%d_%H%M%S_%f.json")
+    (RESULTS_DIR / filename).write_text(
+        json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
 
 def get_run_status(scores: list[ScoreResult]) -> ScoreStatus:
-    if any(score.status == ScoreStatus.FAIL for score in scores):
-        return ScoreStatus.FAIL
-
     if any(score.status == ScoreStatus.ERROR for score in scores):
         return ScoreStatus.ERROR
+
+    if any(score.status == ScoreStatus.FAIL for score in scores):
+        return ScoreStatus.FAIL
 
     return ScoreStatus.PASS
 
 
-def main():
+def build_case_result(
+    case: TestCase, run_evaluations: list[RunEvaluation]
+) -> CaseResult:
+    if not run_evaluations:
+        raise ValueError("At least one run evaluation is required")
+
+    passed = sum(run.status == ScoreStatus.PASS for run in run_evaluations)
+    failed = sum(run.status == ScoreStatus.FAIL for run in run_evaluations)
+    errors = sum(run.status == ScoreStatus.ERROR for run in run_evaluations)
+
+    return CaseResult(
+        case_id=case.id,
+        runs=len(run_evaluations),
+        pass_rate=passed / len(run_evaluations),
+        avg_iterations=mean(run.iterations for run in run_evaluations),
+        max_iterations=max(run.iterations for run in run_evaluations),
+        passed=passed,
+        run_evaluations=run_evaluations,
+        errors=errors,
+        failed=failed,
+        avg_duration_seconds=mean(run.duration_seconds for run in run_evaluations),
+    )
+
+
+def evaluate_run(case: TestCase) -> RunEvaluation:
+
+    start_time = time.perf_counter()
+
+    try:
+        setup_case(case)
+        run_result = run_agent_for_runner(case.input)
+        elapsed = time.perf_counter() - start_time
+
+        if run_result.status != RunStatus.SUCCESS:
+            evaluation = RunEvaluation(
+                status=ScoreStatus.FAIL,
+                scores=[],
+                iterations=run_result.iterations,
+                reason=(
+                    "Agent run failed with error "
+                    f"{run_result.error_code}: {run_result.result}"
+                ),
+                duration_seconds=elapsed,
+            )
+        else:
+            scores = [SCORERS[name].score(case, run_result) for name in case.scorer]
+            evaluation = RunEvaluation(
+                status=get_run_status(scores),
+                scores=scores,
+                iterations=run_result.iterations,
+                duration_seconds=elapsed,
+            )
+    except Exception as error:
+        evaluation = RunEvaluation(
+            status=ScoreStatus.ERROR,
+            scores=[],
+            iterations=0,
+            duration_seconds=time.perf_counter() - start_time,
+            reason=f"Runner error: {type(error).__name__}: {error}",
+        )
+    finally:
+        cleanup_case(case)
+
+    return evaluation
+
+
+def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--runs", type=int, default=1)
     parser.add_argument("--case")
 
     args = parser.parse_args()
-    if args.runs == 0:
-        print_color("Nothing to run with --runs=0", Color.YELLOW)
-        return
+    if args.runs <= 0:
+        print_color("--runs must be greater than zero", Color.YELLOW)
+        return 1
 
     all_cases = load_cases()
 
@@ -327,89 +467,48 @@ def main():
         all_cases = [c for c in all_cases if c.id == args.case]
 
     if len(all_cases) == 0:
-        print_color(f"No case matched with case:{args.case}", Color.YELLOW)
-        return
+        message = (
+            f"No case matched with case:{args.case}"
+            if args.case
+            else f"No test cases found in {CASES_DIR}"
+        )
+        print_color(message, Color.YELLOW)
+        return 1
 
     valid_cases: list[TestCase] = []
 
     for case in all_cases:
-        err = validate_case(case=case)
-        if err:
-            print(f"{case.id}: INVALID")
+        errors = validate_case(case=case)
+        if errors:
+            print(f"{case.id}: INVALID — {'; '.join(errors)}")
             continue
 
         valid_cases.append(case)
 
-    case_results = []
+    if not valid_cases:
+        print_color("No valid cases to run", Color.YELLOW)
+        return 1
+
+    case_results: list[CaseResult] = []
 
     for case in valid_cases:
-        results = []
-        iterations = []
-        run_evaluations = []
-        for _ in range(args.runs):
-            run_result = run_agent_for_runner(case.input)
-            if run_result.status != RunStatus.SUCCESS:
-                run_evaluations.append(
-                    RunEvaluation(
-                        status=ScoreStatus.FAIL,
-                        scores=[],
-                        iterations=run_result.iterations,
-                        reason=f"agent run failed, with error: {run_result.error_code} and the result: {run_result.result}",
-                    )
-                )
-                continue
-
-            scores = []
-            for name in case.scorer:
-                scorer = SCORERS.get(name)
-                if scorer is None:
-                    scores.append(
-                        ScoreResult(
-                            status=ScoreStatus.ERROR,
-                            reason=f"Unknown scorer:{name}",
-                            scorer=name,
-                        )
-                    )
-                    continue
-
-                scores.append(scorer.score(case, run_result))
-
-            passed = all(score.status == ScoreStatus.PASS for score in scores)
-            results.append(passed)
-            iterations.append(run_result.iterations)
-
-            run_evaluations.append(
-                RunEvaluation(
-                    status=get_run_status(scores),
-                    scores=scores,
-                    iterations=run_result.iterations,
-                )
-            )
-
-        case_result = CaseResult(
-            case_id=case.id,
-            runs=len(results),
-            pass_rate=mean(run.status == ScoreStatus.PASS for run in run_evaluations),
-            avg_iterations=mean(run.iterations for run in run_evaluations),
-            max_iterations=max(run.iterations for run in run_evaluations),
-            passed=sum(run.status == ScoreStatus.PASS for run in run_evaluations),
-            run_evaluations=run_evaluations,
-            errors=sum(run.status == ScoreStatus.ERROR for run in run_evaluations),
-            failed=sum(run.status == ScoreStatus.FAIL for run in run_evaluations),
-        )
+        run_evaluations = [evaluate_run(case) for _ in range(args.runs)]
+        case_result = build_case_result(case, run_evaluations)
         case_results.append(case_result)
 
         print(
             f"{case_result.case_id}: "
             f"{case_result.pass_rate:.0%} "
-            f"({case_result.passed}/{case_result.runs} passed)"
+            f"({case_result.passed}/{case_result.runs} passed, "
+            f"{case_result.failed} failed, {case_result.errors} errors)"
         )
 
     overall_pass_rate = mean(case.pass_rate for case in case_results)
     print(f"\nOverall pass rate: {overall_pass_rate:.0%}")
 
     save_report(case_results, overall_pass_rate)
+    return 0 if all(case.pass_rate == 1.0 for case in case_results) else 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

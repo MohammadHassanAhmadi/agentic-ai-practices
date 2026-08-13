@@ -1,6 +1,11 @@
 {
     "id": "delegate_reader",
-    "input": "Ask the reader agent to read notes.txt.",
+    "input": "Ask the reader agent to read notes.txt. Then write the returned content to summary.txt.",
+    "setup": {
+        "create_files": {
+            "notes.txt": "Evaluation harness notes."
+        }
+    },
     "expected": {
         "tool_calls": [
             {
@@ -10,14 +15,14 @@
             {
                 "name": "write_file",
                 "arguments": {
-                    "filename": "summary.txt"
+                    "path": "summary.txt"
                 }
             }
         ],
         "max_iterations": 4
     },
     "scorers": [
-        "tool_call",
+        "tool_called",
         "tool_order",
         "max_iterations"
     ]

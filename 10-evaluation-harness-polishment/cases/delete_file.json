@@ -11,12 +11,12 @@
             {
                 "name": "delete_file",
                 "arguments": {
-                    "filename": "hello.txt"
+                    "path": "hello.txt"
                 }
             }
         ]
     },
     "scorers": [
-        "tool_calls"
+        "tool_called"
     ]
 }

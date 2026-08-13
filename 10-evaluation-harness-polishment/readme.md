@@ -1,133 +1,6 @@
-# Project 9 — Evaluation Harness
+# Project 10 — Polished Evaluation Harness
 
-A simple evaluation runner for testing an AI agent repeatedly and measuring its reliability.
-
-## Structure
-
-```text
-project/
-├── cases/
-│   ├── write_file.json
-│   ├── delegate_reader.json
-│   └── ...
-├── results/
-├── runner.py
-└── app.py
-```
-
-## Test Cases
-
-Put test cases inside the `cases/` folder as JSON files.
-
-Example:
-
-```json
-{
-  "id": "write_file",
-  "input": "Write Hello Agentic World into hello.txt",
-  "expected": {
-    "tool": {
-      "name": "write_file"
-    },
-    "max_iterations": 3
-  },
-  "scorers": [
-    "tool_called",
-    "max_iterations"
-  ]
-}
-```
-
-Each case defines:
-
-* `id` — unique test name
-* `input` — prompt sent to the agent
-* `expected` — expected behavior
-* `scorers` — checks used to evaluate the run
-
-## Available Scorers
-
-Depending on the current implementation:
-
-```text
-tool_called
-max_iterations
-llm_judge
-```
-
-Example using LLM Judge:
-
-```json
-{
-  "id": "explain_dataclass",
-  "input": "Explain Python dataclass in a simple and short way.",
-  "expected": {
-    "answer_rubric": "The answer must be correct, simple and short.",
-    "max_iterations": 1
-  },
-  "scorers": [
-    "llm_judge",
-    "max_iterations"
-  ]
-}
-```
-
-## Run
-
-Run all cases once:
-
-```bash
-python runner.py
-```
-
-Run all cases 5 times:
-
-```bash
-python runner.py --runs 5
-```
-
-Run only one case:
-
-```bash
-python runner.py --case write_file
-```
-
-Run one case 5 times:
-
-```bash
-python runner.py --case write_file --runs 5
-```
-
-## Output
-
-The runner reports results such as:
-
-```text
-write_file: 80% (4/5 passed)
-delegate_reader: 100% (5/5 passed)
-```
-
-Detailed reports are saved inside:
-
-```text
-results/
-```
-
-## Evaluation Flow
-
-```text
-Test Cases
-    ↓
-Runner
-    ↓
-Agent
-    ↓
-Scorers
-    ↓
-PASS / FAIL / ERROR
-    ↓
-Report
-```
+A small evaluation harness for measuring an AI agent's correctness, reliability, and latency across repeated runs.
 
 ## Goal
 
@@ -139,4 +12,88 @@ Reliably
 Efficiently
 ```
 
-instead of relying on manually watching a single successful run.
+## What Was Added
+
+- Typed `TestCase`, `Expected`, and `ToolCall` models
+- JSON parsing and validation before agent execution
+- Tool-call arguments, multiple expected calls, and relative-order checks
+- Deterministic scorers plus a structured Pydantic LLM Judge
+- Isolated tests with setup, cleanup, and `try/finally`
+- Repeated runs, latency measurement, saved reports, and regression comparison
+
+## Add Test Cases
+
+Place one JSON file per case inside `cases/`:
+
+```text
+cases/
+├── write_file.json
+└── delegate_then_write.json
+```
+
+Example:
+
+```json
+{
+  "id": "delegate_then_write",
+  "input": "Read notes.txt, then write its summary to summary.txt.",
+  "setup": {
+    "create_files": {
+      "notes.txt": "Agent evaluation notes"
+    }
+  },
+  "expected": {
+    "tool_calls": [
+      {
+        "name": "call_sub_agent",
+        "arguments": {}
+      },
+      {
+        "name": "write_file",
+        "arguments": {
+          "filename": "summary.txt"
+        }
+      }
+    ],
+    "max_iterations": 4,
+    "answer_rubric": "The answer must clearly confirm the completed task."
+  },
+  "scorers": [
+    "tool_calls",
+    "tool_order",
+    "max_iterations",
+    "llm_judge"
+  ]
+}
+```
+
+Only include expectations and scorers needed by the case. `tool_calls` uses exact argument matching when `arguments` is not empty. `tool_order` checks relative order, so unrelated calls may appear between expected calls.
+
+## Run Evaluations
+
+```bash
+# Run every case once
+python runner.py
+
+# Run every case five times
+python runner.py --runs 5
+
+# Run one case five times
+python runner.py --case delegate_then_write --runs 5
+```
+
+Reports are saved as JSON files under `results/`. Each report includes pass rates and average duration.
+
+## Compare Reports
+
+After creating at least two reports:
+
+```bash
+python run_evaluator.py
+```
+
+The latest two reports are compared per case as `IMPROVED`, `REGRESSED`, `UNCHANGED`, `NEW`, or `REMOVED`. Status is based on pass rate; latency is shown as a supporting metric.
+
+> Token and cost tracking were intentionally deferred.
+
+

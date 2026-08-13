@@ -1,8 +1,7 @@
 {
     "id": "bad_case",
     "input": "Write hello",
-    "expected": {},
-    "scorers": [
-        "tool_called"
-    ]
+    "expected": {
+        "max_iterations": 1
+    }
 }

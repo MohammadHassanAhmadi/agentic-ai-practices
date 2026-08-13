@@ -9,7 +9,10 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from system_prompts import ORCHESTRATOR_SYSTEM_PROMPT, READER_SYSTEM_PROMPT
 
-from shared_tools.utiles import Color, print_color
+from shared_tools.utiles import Color, configure_utf8_output, print_color
+
+
+configure_utf8_output()
 
 load_dotenv(override=True)
 
