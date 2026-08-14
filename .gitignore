@@ -37,3 +37,5 @@ workspace
 workspace/**
 
 results/
+states/
+runs/
