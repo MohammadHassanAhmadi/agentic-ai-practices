@@ -1,0 +1,10 @@
+{
+    "id": "no_tool",
+    "input": "Say hello to me.",
+    "expected": {
+        "max_iterations": 1
+    },
+    "scorers": [
+        "max_iterations"
+    ]
+}
