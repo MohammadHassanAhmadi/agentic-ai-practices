@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 
 import sys
@@ -31,11 +32,45 @@ def configure_utf8_output() -> None:
             reconfigure(encoding="utf-8", errors="replace")
 
 
+def format_console_message(text: str) -> str:
+    """Add a compact timestamp and a useful category to console output."""
+
+    message = str(text).strip("\n")
+    if not message:
+        return f"[{datetime.now():%H:%M:%S}]"
+
+    label = ""
+    if not message.startswith("["):
+        label_by_text = (
+            ("tool_called:", "TOOL"),
+            ("there was an error", "ERROR"),
+            ("failed", "ERROR"),
+            ("message-History:", "STATE"),
+            ("message count:", "STATE"),
+            ("llm_resp", "MODEL"),
+            ("thinking", "MODEL"),
+            ("state saved", "MEMORY"),
+            ("Loading state", "MEMORY"),
+            ("syncing state", "MEMORY"),
+            ("sync completed", "MEMORY"),
+            ("Running task", "RUN"),
+            ("final answer", "AGENT"),
+            ("Final Result", "AGENT"),
+        )
+        for marker, candidate in label_by_text:
+            if marker.lower() in message.lower():
+                label = f" [{candidate}]"
+                break
+
+    prefix = f"[{datetime.now():%H:%M:%S}]{label} "
+    lines = message.splitlines()
+    return prefix + (f"\n{' ' * len(prefix)}".join(lines))
+
+
 def print_color(text: str, color: str):
 
-    # now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    print(f"{color}{text}{Color.RESET}")
+    formatted_text = format_console_message(text)
+    print(f"{color}{formatted_text}{Color.RESET}")
 
     with open("output.txt", "a", encoding="utf-8") as file:
         file.write(f"{text}\n")
