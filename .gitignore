@@ -39,3 +39,4 @@ workspace/**
 results/
 states/
 runs/
+*.db
