@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG — تمرین مصاحبه</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+<style>
+:root{
+  --bg:#0d1117; --panel:#151b23; --panel2:#1b2430; --line:#2a3441;
+  --tx:#e8eef5; --tx2:#b6c2ce; --mut:#8896a5;
+  --acc:#6cb6ff; --grn:#57d364; --org:#e3b341; --red:#ff7b72; --pur:#d2a8ff;
+  --code-bg:#1e1e1e;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(108,182,255,.09), transparent 60%),
+    radial-gradient(900px 450px at 0% 10%, rgba(210,168,255,.06), transparent 60%),
+    var(--bg);
+  color:var(--tx); font-size:16px; padding:0 20px 90px;
+}
+.wrap{max-width:880px;margin:0 auto;padding-top:46px}
+
+h1{font-size:34px;font-weight:800;margin:0 0 14px;letter-spacing:-.5px}
+h2{font-size:24px;font-weight:800;margin:52px 0 14px;padding-bottom:12px;
+   border-bottom:1px solid var(--line)}
+h3{font-size:18px;font-weight:700;margin:30px 0 10px;color:var(--acc)}
+h4{font-size:15.5px;font-weight:700;margin:22px 0 8px;color:var(--org)}
+p{margin:12px 0}
+a{color:var(--acc)}
+hr{border:0;border-top:1px solid var(--line);margin:44px 0}
+
+blockquote{
+  background:linear-gradient(180deg,rgba(108,182,255,.10),rgba(108,182,255,.03));
+  border:1px solid rgba(108,182,255,.28); border-radius:12px;
+  padding:14px 22px; margin:20px 0; color:var(--tx2);
+}
+blockquote p{margin:7px 0}
+blockquote strong{color:var(--acc)}
+
+ul,ol{padding-inline-start:24px}
+li{margin:6px 0}
+li::marker{color:var(--mut)}
+
+pre{
+  direction:ltr; text-align:left;
+  background:var(--code-bg); border:1px solid #333; border-radius:11px;
+  padding:0; overflow:hidden; margin:18px 0;
+}
+pre code{
+  display:block; background:var(--code-bg); color:#D4D4D4;
+  padding:15px 17px; overflow-x:auto;
+  font-family:"JetBrains Mono",Consolas,ui-monospace,monospace;
+  font-size:12.8px; line-height:1.8;
+}
+.hljs-keyword,.hljs-meta .hljs-keyword{color:#C586C0}
+.hljs-built_in{color:#4EC9B0}
+.hljs-type,.hljs-title.class_{color:#4EC9B0}
+.hljs-literal{color:#569CD6}
+.hljs-number{color:#B5CEA8}
+.hljs-string,.hljs-meta .hljs-string{color:#CE9178}
+.hljs-comment{color:#6A9955;font-style:italic}
+.hljs-title,.hljs-title.function_{color:#DCDCAA}
+.hljs-params,.hljs-attr,.hljs-variable,.hljs-property{color:#9CDCFE}
+.hljs-subst{color:#D4D4D4}
+
+:not(pre) > code{
+  font-family:"JetBrains Mono",ui-monospace,monospace;
+  background:#1e1e1e; border:1px solid #333; padding:2px 7px;
+  border-radius:6px; color:#DCDCAA; font-size:12.5px;
+  direction:ltr; display:inline-block;
+}
+
+table{
+  width:100%; border-collapse:separate; border-spacing:0; margin:20px 0;
+  font-size:14.5px; border:1px solid var(--line); border-radius:11px; overflow:hidden;
+}
+th,td{padding:11px 15px; vertical-align:top; border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:none}
+th{background:var(--panel2); color:var(--acc); font-size:12.5px;
+   font-weight:700; letter-spacing:.05em; text-transform:uppercase}
+
+details{
+  background:var(--panel); border:1px solid var(--line); border-radius:13px;
+  margin:14px 0; overflow:hidden; transition:border-color .2s;
+}
+details[open]{border-color:rgba(108,182,255,.4)}
+summary{
+  cursor:pointer; list-style:none; padding:17px 22px;
+  font-size:17px; line-height:1.6; transition:background .18s;
+}
+summary::-webkit-details-marker{display:none}
+summary:hover{background:var(--panel2)}
+summary b{font-weight:700}
+details[open] summary{border-bottom:1px solid var(--line); background:var(--panel2)}
+details > *:not(summary){padding-inline:22px}
+details > p:first-of-type{padding-top:14px}
+details > *:last-child{padding-bottom:16px}
+details table,details pre{width:calc(100% - 44px); margin-inline:22px}
+
+footer{
+  text-align:center; color:var(--mut); font-size:13px;
+  margin-top:60px; padding-top:26px; border-top:1px solid var(--line);
+}
+
+body{font-family:"Vazirmatn","Segoe UI",Tahoma,sans-serif;line-height:2.05}
+h2{border-right:4px solid var(--acc);border-bottom:1px solid var(--line);padding-right:12px}
+th,td{text-align:right}
+blockquote{border-right:3px solid var(--acc)}
+summary{display:flex;gap:10px;align-items:flex-start}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>RAG — تمرین مصاحبه</h1>
+<p><strong>۲۱ سوال در ۴ سطح، به‌همراه یک سناریوی طراحی</strong></p>
+<blockquote>
+<p><strong>روش استفاده:</strong> اول جواب را بلند و با کلمات خودت بگو، <em>بعد</em> کارت را باز کن.
+اگر جوابت با <strong>جواب کوتاه</strong> یکی بود، خوب است. اگر <strong>امتیاز اضافه</strong> را نگفتی، یعنی جا برای عمق بیشتر داری.
+هدف حفظ کردن نیست؛ هدف این است که بتوانی <strong>دلیلش</strong> را توضیح بدهی.</p>
+</blockquote>
+<hr />
+<h2>سیستمی که درباره‌اش حرف می‌زنیم</h2>
+<pre><code class="language-text">PHASE 1 - INDEXING   documents -&gt; chunks -&gt; embed -&gt; vector store
+
+PHASE 2 - QUERY      question -&gt; embed -&gt; top-k nearest chunks
+                              -&gt; grounded prompt -&gt; LLM -&gt; answer + sources
+</code></pre>
+<hr />
+<h2>سطح ۱ — پایه</h2>
+<details>
+<summary><b>۱. RAG در یک جمله یعنی چه؟</b></summary>
+<p><strong>جواب کوتاه</strong> — اول بخش‌های مرتبط داده‌ی خودت را پیدا کن، بعد فقط همان‌ها را به LLM بده تا جواب بسازد.</p>
+<p><strong>امتیاز اضافه</strong> — نکته این است که مدل دیگر لازم نیست چیزی <em>بداند</em>؛ فقط باید متنی را که جلویش گذاشته‌ای بخواند. همین باعث می‌شود دانش بدون آموزش مجدد قابل به‌روزرسانی باشد.</p>
+</details>
+<details>
+<summary><b>۲. چرا همه‌ی اسناد را داخل prompt نریزیم؟</b></summary>
+<p><strong>جواب کوتاه</strong> — پنجره‌ی context محدود است، هزینه با تعداد توکن خطی بالا می‌رود، و مدل‌ها متنی را که وسط یک context خیلی بلند دفن شده نادیده می‌گیرند (<em>lost in the middle</em>).</p>
+<p><strong>امتیاز اضافه</strong> — حتی وقتی همه چیز جا می‌شود، دقت پایین می‌آید. هر متن بی‌ربط اضافه در prompt یعنی نویز بیشتری که با جواب درست رقابت می‌کند.</p>
+</details>
+<details>
+<summary><b>۳. چرا مدل را روی داده‌ی خودمان fine-tune نکنیم؟</b></summary>
+<p><strong>جواب کوتاه</strong> — fine-tune گران و کند است، با هر تغییر داده باید تکرار شود، citation تولید نمی‌کند، و نمی‌تواند یک سند حذف‌شده را فراموش کند.</p>
+<p><strong>امتیاز اضافه</strong> — fine-tune <strong>سبک و رفتار</strong> یاد می‌دهد. RAG <strong>حقایق</strong> را تأمین می‌کند. دو مسئله‌ی متفاوت‌اند و اغلب کنار هم استفاده می‌شوند.</p>
+</details>
+<details>
+<summary><b>۴. Embedding چیست؟</b></summary>
+<p><strong>جواب کوتاه</strong> — یک لیست عدد با طول ثابت که معنای یک متن را نمایندگی می‌کند. متن‌های هم‌معنا بردارهای نزدیک می‌گیرند، حتی بدون هیچ کلمه‌ی مشترک.</p>
+<p><strong>امتیاز اضافه</strong> — برعکس hash است. hash ورودی‌های شبیه را از هم دور می‌کند؛ embedding آن‌ها را کنار هم نگه می‌دارد. طول خروجی مستقل از طول ورودی ثابت است — یک کلمه و یک پاراگراف هر دو مثلاً ۳۸۴ عدد می‌دهند.</p>
+</details>
+<details>
+<summary><b>۵. نزدیکی دو متن را چطور اندازه می‌گیری؟</b></summary>
+<p><strong>جواب کوتاه</strong> — cosine similarity: زاویه‌ی بین دو بردار. ۱.۰ یعنی معنای یکسان، ۰.۰ یعنی بی‌ربط.</p>
+<p><strong>امتیاز اضافه</strong> — عدد مطلق به‌تنهایی معنا ندارد — ۰.۶ به‌طور جهانی «خوب» نیست. چیزی که مهم است <strong>رتبه‌بندی نسبی</strong> بین کاندیداهای یک سوال است.</p>
+</details>
+<details>
+<summary><b>۶. یک سیستم RAG چند فاز دارد؟</b></summary>
+<p><strong>جواب کوتاه</strong> — <strong>Indexing</strong> (آفلاین): اسناد را به chunk بشکن، هرکدام را embed کن، بردارها را ذخیره کن. <strong>Retrieval + generation</strong> (آنلاین): سوال را embed کن، نزدیک‌ترین top-k را پیدا کن، در prompt بگذار، LLM را صدا بزن.</p>
+<p><strong>امتیاز اضافه</strong> — همان تفکیک دیتابیس: ساختن index یک کار یک‌باره‌ی گران و آفلاین است؛ زدن query سریع است و در هر درخواست اتفاق می‌افتد.</p>
+</details>
+<hr />
+<h2>سطح ۲ — تصمیم‌های طراحی</h2>
+<details>
+<summary><b>۷. اصلاً چرا اسناد را chunk می‌کنیم؟</b></summary>
+<p><strong>جواب کوتاه</strong> — سه دلیل: مدل‌های embedding سقف توکن دارند؛ بردار یک سند بلند میانگین همه چیز می‌شود و دقتش را از دست می‌دهد؛ و می‌خواهی سه پاراگراف مرتبط به LLM بدهی، نه صد صفحه.</p>
+<p><strong>امتیاز اضافه</strong> — دلیل وسطی همان است که همه فراموش می‌کنند. بردار یک سند کامل از نظر معنایی مبهم است — حتی وقتی سند درست است، بد بازیابی می‌شود.</p>
+</details>
+<details>
+<summary><b>۸. اندازه‌ی chunk را چطور انتخاب می‌کنی و overlap برای چیست؟</b></summary>
+<p><strong>جواب کوتاه</strong> — یک توازن است. خیلی کوچک باشد context گم می‌شود («این» به چه اشاره داشت؟)؛ خیلی بزرگ باشد نویز اضافه می‌شود و بازیابی بی‌دقت می‌شود. معمولاً چند صد توکن با کمی هم‌پوشانی بین تکه‌های پشت‌سرهم تا جمله‌ای وسط قطع نشود.</p>
+<p><strong>امتیاز اضافه</strong> — اندازه‌ی جهانی وجود ندارد. به ساختار سند بستگی دارد — قرارداد حقوقی، لاگ چت و کد هرکدام تقسیم متفاوتی می‌خواهند. تقسیم روی مرزهای طبیعی (سرتیتر، پاراگراف) معمولاً بهتر از تقسیم با طول ثابت است.</p>
+</details>
+<details>
+<summary><b>۹. Top-k چیست و چطور انتخابش می‌کنی؟</b></summary>
+<p><strong>جواب کوتاه</strong> — تعداد نزدیک‌ترین تکه‌هایی که به LLM می‌دهی. معمولاً ۳ تا ۵. کم بگیری ممکن است جواب داخلش نباشد؛ زیاد بگیری نویز و هزینه اضافه می‌شود.</p>
+<p><strong>امتیاز اضافه</strong> — بالا بردن k یک بیمه‌ی ارزان است <em>اگر</em> prompt خوب گراند شده باشد، چون مدل می‌تواند اضافه‌ها را دور بریزد. بدون grounding، k بالا فعالانه آسیب می‌زند.</p>
+</details>
+<details>
+<summary><b>۱۰. Grounding چیست و چرا مهم است؟</b></summary>
+<p><strong>جواب کوتاه</strong> — دستوری که مدل را مجبور می‌کند فقط از روی context داده‌شده جواب بدهد و وقتی جواب آنجا نیست بگوید «نمی‌دانم».</p>
+<p><strong>امتیاز اضافه</strong> — بدون آن، مدل جای خالی را از دانش آموزشی خودش پر می‌کند و یک جواب با اعتمادبه‌نفس می‌گیری که هیچ سندی پشتش نیست — بدترین حالت شکست، چون درست به نظر می‌رسد.</p>
+</details>
+<details>
+<summary><b>۱۱. چطور citation قابل اعتماد تولید می‌کنی؟</b></summary>
+<p><strong>جواب کوتاه</strong> — هر خط context را با منبعش برچسب بزن، با structured output از مدل بپرس واقعاً از کدام منابع استفاده کرده، بعد آن اسم‌ها را با chunkهایی که واقعاً بازیابی کردی اعتبارسنجی کن.</p>
+<p><strong>امتیاز اضافه</strong> — نسخه‌ی ساده‌لوحانه — چاپ منبع همه‌ی chunkهای بازیابی‌شده — غلط است. بازیابی‌شده با استفاده‌شده یکی نیست. نشان دادن منبعی که جواب در آن نیست بدتر از نشان ندادن است، چون اعتماد را از بین می‌برد. و مرحله‌ی اعتبارسنجی مهم است: مدل می‌تواند یک اسم فایل از خودش بسازد.</p>
+</details>
+<details>
+<summary><b>۱۲. Vector database چیست و چه فرقی با دیتابیس معمولی دارد؟</b></summary>
+<p><strong>جواب کوتاه</strong> — دیتابیس معمولی به «کدام ردیف id = 5 دارد» جواب می‌دهد. vector database به «کدام پنج بردار به این نزدیک‌ترند» جواب می‌دهد. index روی یک فضای برداری است نه روی یک ستون.</p>
+<p><strong>امتیاز اضافه</strong> — در مقیاس کوچک لازمش نداری — یک لیست و یک حلقه کافی است، دقیقاً کاری که این پروژه می‌کند. وقتی لازم می‌شود که embed کردن مجدد در هر اجرا اتلاف شود و پیمایش خطی کند شود. گزینه‌ها از Chroma و FAISS (محلی) تا pgvector (افزونه‌ی Postgres) تا Qdrant و Pinecone (production).</p>
+</details>
+<hr />
+<h2>سطح ۳ — مهندسی</h2>
+<details>
+<summary><b>۱۳. چرا حد شباهت برای فیلتر کردن نتایج بی‌ربط کافی نیست؟</b></summary>
+<p><strong>جواب کوتاه</strong> — چون هم‌زمان false positive و false negative تولید می‌کند و هیچ عددی از هر دو فرار نمی‌کند. در تست ما حد ۰.۳ یک سند بی‌ربط را با ۰.۳۲۵ راه داد و یک سند درست را با ۰.۲۱۶ انداخت بیرون.</p>
+<p><strong>امتیاز اضافه</strong> — عدد جهانی هم وجود ندارد: حد درست به مدل embedding، دامنه، و نحوه‌ی بیان سوال بستگی دارد و باید با یک مجموعه‌ی تست واقعی اندازه‌گیری شود. طراحی درست دو لایه است — حد را پایین بگذار تا جواب درست را از دست ندهی، و بگذار LLM گراند‌شده چیزهای بی‌ربط را رد کند. <strong>retrieve wide, filter narrow.</strong></p>
+</details>
+<details>
+<summary><b>۱۴. آیا می‌شود بعداً مدل embedding را عوض کرد؟</b></summary>
+<p><strong>جواب کوتاه</strong> — فقط با ساختن دوباره‌ی کل index. بردارهای دو مدل مختلف در فضاهای متفاوتی زندگی می‌کنند و قابل مقایسه نیستند.</p>
+<p><strong>امتیاز اضافه</strong> — این یعنی مدل embedding یک تعهد معماری بلندمدت است، نه یک فلگ کانفیگ. ضمناً باید ذخیره کنی هر index با کدام مدل ساخته شده، وگرنه یک روز بردارهای ناسازگار را مقایسه می‌کنی و خروجی بی‌معنا می‌گیری بدون هیچ خطایی.</p>
+</details>
+<details>
+<summary><b>۱۵. چرا فراخوانی similarity یک ماتریس برمی‌گرداند نه یک لیست؟</b></summary>
+<p><strong>جواب کوتاه</strong> — چون ساخته شده تا چند سوال را در برابر چند سند در یک عملیات مقایسه کند. ردیف‌ها سوال‌اند، ستون‌ها سندها. با یک سوال، ردیف صفر را برمی‌داری.</p>
+<p><strong>امتیاز اضافه</strong> — batch کردن در عمل مهم است: embed و مقایسه در یک فراخوانی برداری‌شده به‌مراتب سریع‌تر از حلقه است، و به همین دلیل API این شکل را دارد.</p>
+</details>
+<details>
+<summary><b>۱۶. بیشتر باگ‌های RAG از کجا می‌آیند؟</b></summary>
+<p><strong>جواب کوتاه</strong> — از retrieval، نه از generation. اگر تکه‌ی درست هرگز به prompt نرسد، هیچ مدلی جواب را نجات نمی‌دهد. کیفیت بازیابی سقف کل سیستم است.</p>
+<p><strong>امتیاز اضافه</strong> — به همین دلیل دیباگ باید با چاپ کردن chunkهای بازیابی‌شده و امتیازشان شروع شود. مقصر دانستن مدل — یا عوض کردنش با یک مدل بزرگ‌تر — کلاسیک‌ترین بعدازظهر تلف‌شده است.</p>
+</details>
+<hr />
+<h2>سطح ۴ — سوالات تله</h2>
+<details>
+<summary><b>۱۷. «چند مشتری در ژوئن لغو کردند؟» — آیا RAG جواب می‌دهد؟</b></summary>
+<p><strong>جواب کوتاه</strong> — نه، و <em>با اعتمادبه‌نفس</em> شکست می‌خورد. RAG چند تکه بازیابی می‌کند؛ هرگز کل داده را نمی‌بیند. شمارش و تجمیع کار دیتابیس است.</p>
+<p><strong>امتیاز اضافه</strong> — معماری درست سوال را مسیریابی می‌کند: سوالات تجمیعی به SQL (اغلب از طریق text-to-SQL) و سوالات توصیفی به RAG. دانستن اینکه سیستمت چه سوالاتی را <em>نمی‌تواند</em> جواب بدهد بخشی از طراحی آن است.</p>
+</details>
+<details>
+<summary><b>۱۸. دو سند بازیابی‌شده با هم تناقض دارند. چه اتفاقی می‌افتد؟</b></summary>
+<p><strong>جواب کوتاه</strong> — مدل هر دو را می‌بیند و ممکن است هرکدام را انتخاب کند. شباهت هیچ حرفی درباره‌ی درست یا به‌روز بودن نمی‌زند.</p>
+<p><strong>امتیاز اضافه</strong> — راه‌های کاهش: روی هر chunk زمان ذخیره کن و جدیدترین را ترجیح بده؛ به اسناد اولویت یا سطح اعتبار بده؛ و به مدل بگو تناقض را اعلام کند نه اینکه بی‌صدا یکی را انتخاب کند. همان مسئله‌ی تضاد حافظه‌ها در پروژه‌ی حافظه‌ی بلندمدت.</p>
+</details>
+<details>
+<summary><b>۱۹. RAG تو جواب اشتباه می‌دهد. چطور دیباگش می‌کنی؟</b></summary>
+<p><strong>جواب کوتاه</strong> — به ترتیب: (۱) chunkهای بازیابی‌شده را چاپ کن — اصلاً تکه‌ی درست آنجا بود؟ (۲) اگر نبود، مشکل retrieval است: chunking، مدل embedding، یا k. (۳) اگر بود و جواب باز هم غلط است، مشکل prompt یا grounding است.</p>
+<p><strong>امتیاز اضافه</strong> — جدا کردن این دو کلاس خطا کل مهارت است. راه‌حل‌هایشان کاملاً متفاوت است، و رفتن سراغ یک LLM بهتر وقتی تکه اصلاً بازیابی نشده، رایج‌ترین اشتباه این حوزه است.</p>
+</details>
+<details>
+<summary><b>۲۰. یک سیستم RAG را چطور ارزیابی می‌کنی؟</b></summary>
+<p><strong>جواب کوتاه</strong> — دو مرحله را جدا ارزیابی کن. Retrieval: برای مجموعه‌ای از سوالات با تکه‌های درستِ معلوم، اندازه بگیر چند درصد مواقع تکه‌ی درست در top-k می‌آید. Generation: چک کن جواب توسط context بازیابی‌شده پشتیبانی می‌شود و «نمی‌دانم» وقتی باید، برمی‌گردد.</p>
+<p><strong>امتیاز اضافه</strong> — قبل از تنظیم هر چیزی به یک مجموعه‌ی کوچک سوال برچسب‌خورده نیاز داری — وگرنه حد، k و اندازه‌ی chunk را با حس انتخاب می‌کنی. حالت‌های منفی را هم صریح تست کن: سوال بی‌ربط <em>باید</em> «نمی‌دانم» برگرداند.</p>
+</details>
+<details>
+<summary><b>۲۱. جست‌وجوی کلیدواژه‌ای یا معنایی — کدام بهتر است؟</b></summary>
+<p><strong>جواب کوتاه</strong> — هیچ‌کدام به‌تنهایی. جست‌وجوی معنایی بازنویسی و مترادف را می‌گیرد؛ جست‌وجوی کلیدواژه‌ای توکن‌های دقیق مثل کد محصول، شماره‌ی خطا و اسامی خاص نادر را می‌گیرد که embedding اغلب مبهمشان می‌کند.</p>
+<p><strong>امتیاز اضافه</strong> — سیستم‌های واقعی معمولاً <strong>hybrid search</strong> اجرا می‌کنند — هر دو، با ادغام و rerank نتایج. گفتن «معنایی بهتر است» جواب کسی است که فقط روی متن روایی امتحانش کرده.</p>
+</details>
+<hr />
+<h2>سناریوی طراحی</h2>
+<blockquote>
+<p><strong>صورت مسئله:</strong> یک دستیار داخلی روی مستندات شرکت بساز — چند هزار صفحه Markdown در مخازن مختلف، که روزانه به‌روز می‌شوند. جواب‌ها باید منبعشان را ذکر کنند. بعضی اسناد محرمانه‌اند و فقط برای تیم‌های خاصی قابل دیدن.</p>
+</blockquote>
+<details>
+<summary><b>مسیر جواب دادن — قدم به قدم</b></summary>
+<p><strong>۱. ورود داده و chunking</strong></p>
+<p>بر اساس ساختار تقسیم کن نه طول ثابت — سرتیترهای Markdown مرز طبیعی می‌دهند. کمی overlap نگه دار. با هر chunk متادیتای غنی ذخیره کن: مسیر منبع، سرتیتر، تاریخ آخرین تغییر، تیم/سطح دسترسی.</p>
+<pre><code class="language-text">chunk = {
+    &quot;text&quot;:       &quot;...&quot;,
+    &quot;source&quot;:     &quot;repo/docs/billing.md#refunds&quot;,
+    &quot;team&quot;:       &quot;finance&quot;,
+    &quot;updated_at&quot;: &quot;...&quot;,
+}
+</code></pre>
+<p><strong>۲. کنترل دسترسی</strong></p>
+<p>این همان بخشی است که فراموش می‌شود. فیلتر کردن <em>بعد از</em> بازیابی یک نشت در انتظار است — متن محرمانه همان لحظه وارد prompt شده. فیلتر را <strong>داخل کوئری</strong> بگذار، با متادیتا، تا chunkهای محدود اصلاً برای کاربر غیرمجاز بازیابی نشوند.</p>
+<p><strong>۳. تازگی</strong></p>
+<p>اسناد روزانه عوض می‌شوند، پس indexing نمی‌تواند یک اسکریپت یک‌باره باشد. فقط فایل‌های تغییرکرده را دوباره index کن، با کلید مسیر به‌علاوه‌ی هش محتوا. index کهنه جواب قدیمی با اعتمادبه‌نفس تولید می‌کند — یکی از بدترین حالت‌های شکست.</p>
+<p><strong>۴. بازیابی</strong></p>
+<p>Hybrid search: معنایی برای سوالات بازنویسی‌شده، کلیدواژه‌ای برای کد خطا و شناسه‌ها. گسترده بازیابی کن (حد پایین، k حدود ۵)، بعد بگذار prompt گراند‌شده محدودش کند.</p>
+<p><strong>۵. تولید جواب و citation</strong></p>
+<p>محکم گراند کن («فقط از روی context، وگرنه بگو نمی‌دانم»). <code>used_sources</code> را با structured output بگیر و قبل از نمایش لینک با مجموعه‌ی بازیابی‌شده اعتبارسنجی کن.</p>
+<p><strong>۶. ارزیابی</strong></p>
+<p>از کانال‌های پشتیبانی یک مجموعه‌ی برچسب‌خورده از سوالات واقعی بساز. نرخ اصابت بازیابی را جدا از کیفیت جواب اندازه بگیر. سوالات بی‌ربطی که باید «نمی‌دانم» برگردانند را هم بگنجان.</p>
+<p><strong>۷. چیزی که هنوز انجام نمی‌دهد</strong></p>
+<p>سوالات تجمیعی («چند سرویس از Postgres استفاده می‌کنند؟») مسیر متفاوتی می‌خواهند. این را صریح اعلام کن، نه اینکه بگذاری سیستم حدس بزند.</p>
+<p><strong>جمله‌ی پایانی</strong> — <em>«در RAG، مدل به‌ندرت گلوگاه است. کیفیت بازیابی، متادیتا و تازگی، خودِ سیستم‌اند.»</em></p>
+</details>
+<hr />
+<h2>خودارزیابی</h2>
+<p>بدون نگاه کردن به این صفحه، می‌توانی:</p>
+<ul>
+<li style="list-style:none">&#9744; RAG و دو فازش را در یک دقیقه توضیح بدهی</li>
+<li style="list-style:none">&#9744; Embedding را با مقایسه‌ی hash توضیح بدهی</li>
+<li style="list-style:none">&#9744; بگویی چرا حد شباهت به‌تنهایی نمی‌تواند فیلتر باشد</li>
+<li style="list-style:none">&#9744; Grounding را توضیح بدهی و بگویی بدون آن چه می‌شکند</li>
+<li style="list-style:none">&#9744; بگویی چطور citation قابل اعتماد می‌سازی، شامل مرحله‌ی اعتبارسنجی</li>
+<li style="list-style:none">&#9744; کلاس سوالاتی که RAG نمی‌تواند جواب بدهد را نام ببری و بگویی به‌جایش چه استفاده می‌شود</li>
+<li style="list-style:none">&#9744; یک جواب اشتباه را با جدا کردن خطای retrieval از خطای generation دیباگ کنی</li>
+<li style="list-style:none">&#9744; بگویی چطور دو مرحله را جداگانه ارزیابی می‌کنی</li>
+<li style="list-style:none">&#9744; سناریوی بالا را در ده دقیقه روی کاغذ طراحی کنی</li>
+</ul>
+<footer>تمرین مصاحبه RAG · ۲۱ سوال + سناریوی طراحی</footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script>
+document.querySelectorAll('pre code').forEach(function (el) {
+  if (el.className.indexOf('language-text') === -1) hljs.highlightElement(el);
+});
+</script>
+</body>
+</html>

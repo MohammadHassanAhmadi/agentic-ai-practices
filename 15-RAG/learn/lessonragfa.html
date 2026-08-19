@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG — درسنامه ۱۵</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+<style>
+:root{
+  --bg:#0d1117; --panel:#151b23; --panel2:#1b2430; --line:#2a3441;
+  --tx:#e8eef5; --tx2:#b6c2ce; --mut:#8896a5;
+  --acc:#6cb6ff; --grn:#57d364; --org:#e3b341; --red:#ff7b72; --pur:#d2a8ff;
+  --code-bg:#1e1e1e;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(108,182,255,.09), transparent 60%),
+    radial-gradient(900px 450px at 0% 10%, rgba(210,168,255,.06), transparent 60%),
+    var(--bg);
+  color:var(--tx); font-size:16px; padding:0 20px 90px;
+}
+.wrap{max-width:880px;margin:0 auto;padding-top:46px}
+
+h1{font-size:34px;font-weight:800;margin:0 0 14px;letter-spacing:-.5px}
+h2{font-size:24px;font-weight:800;margin:52px 0 14px;padding-bottom:12px;
+   border-bottom:1px solid var(--line)}
+h3{font-size:18px;font-weight:700;margin:30px 0 10px;color:var(--acc)}
+h4{font-size:15.5px;font-weight:700;margin:22px 0 8px;color:var(--org)}
+p{margin:12px 0}
+a{color:var(--acc)}
+hr{border:0;border-top:1px solid var(--line);margin:44px 0}
+
+blockquote{
+  background:linear-gradient(180deg,rgba(108,182,255,.10),rgba(108,182,255,.03));
+  border:1px solid rgba(108,182,255,.28); border-radius:12px;
+  padding:14px 22px; margin:20px 0; color:var(--tx2);
+}
+blockquote p{margin:7px 0}
+blockquote strong{color:var(--acc)}
+
+ul,ol{padding-inline-start:24px}
+li{margin:6px 0}
+li::marker{color:var(--mut)}
+
+pre{
+  direction:ltr; text-align:left;
+  background:var(--code-bg); border:1px solid #333; border-radius:11px;
+  padding:0; overflow:hidden; margin:18px 0;
+}
+pre code{
+  display:block; background:var(--code-bg); color:#D4D4D4;
+  padding:15px 17px; overflow-x:auto;
+  font-family:"JetBrains Mono",Consolas,ui-monospace,monospace;
+  font-size:12.8px; line-height:1.8;
+}
+.hljs-keyword,.hljs-meta .hljs-keyword{color:#C586C0}
+.hljs-built_in{color:#4EC9B0}
+.hljs-type,.hljs-title.class_{color:#4EC9B0}
+.hljs-literal{color:#569CD6}
+.hljs-number{color:#B5CEA8}
+.hljs-string,.hljs-meta .hljs-string{color:#CE9178}
+.hljs-comment{color:#6A9955;font-style:italic}
+.hljs-title,.hljs-title.function_{color:#DCDCAA}
+.hljs-params,.hljs-attr,.hljs-variable,.hljs-property{color:#9CDCFE}
+.hljs-subst{color:#D4D4D4}
+
+:not(pre) > code{
+  font-family:"JetBrains Mono",ui-monospace,monospace;
+  background:#1e1e1e; border:1px solid #333; padding:2px 7px;
+  border-radius:6px; color:#DCDCAA; font-size:12.5px;
+  direction:ltr; display:inline-block;
+}
+
+table{
+  width:100%; border-collapse:separate; border-spacing:0; margin:20px 0;
+  font-size:14.5px; border:1px solid var(--line); border-radius:11px; overflow:hidden;
+}
+th,td{padding:11px 15px; vertical-align:top; border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:none}
+th{background:var(--panel2); color:var(--acc); font-size:12.5px;
+   font-weight:700; letter-spacing:.05em; text-transform:uppercase}
+
+details{
+  background:var(--panel); border:1px solid var(--line); border-radius:13px;
+  margin:14px 0; overflow:hidden; transition:border-color .2s;
+}
+details[open]{border-color:rgba(108,182,255,.4)}
+summary{
+  cursor:pointer; list-style:none; padding:17px 22px;
+  font-size:17px; line-height:1.6; transition:background .18s;
+}
+summary::-webkit-details-marker{display:none}
+summary:hover{background:var(--panel2)}
+summary b{font-weight:700}
+details[open] summary{border-bottom:1px solid var(--line); background:var(--panel2)}
+details > *:not(summary){padding-inline:22px}
+details > p:first-of-type{padding-top:14px}
+details > *:last-child{padding-bottom:16px}
+details table,details pre{width:calc(100% - 44px); margin-inline:22px}
+
+footer{
+  text-align:center; color:var(--mut); font-size:13px;
+  margin-top:60px; padding-top:26px; border-top:1px solid var(--line);
+}
+
+body{font-family:"Vazirmatn","Segoe UI",Tahoma,sans-serif;line-height:2.05}
+h2{border-right:4px solid var(--acc);border-bottom:1px solid var(--line);padding-right:12px}
+th,td{text-align:right}
+blockquote{border-right:3px solid var(--acc)}
+summary{display:flex;gap:10px;align-items:flex-start}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>RAG — درسنامه‌ی ۱۵</h1>
+<p><strong>ساخت دستی Retrieval-Augmented Generation</strong></p>
+<blockquote>
+<p>بدون هیچ کتابخانه‌ی RAG. شش سند، یک مدل embedding محلی، و یک فراخوانی LLM. هدف این است که قبل از اینکه یک فریم‌ورک همه‌چیز را پنهان کند، هر قطعه را خودمان بفهمیم.</p>
+</blockquote>
+<hr />
+<h2>۱. مسئله‌ی اصلی</h2>
+<p>یک LLM دو محدودیت ذاتی دارد:</p>
+<ol start="۱">
+<li><strong>چیزی از داده‌ی تو نمی‌داند.</strong> مستندات شرکت، کد داخلی، تیکت‌های پشتیبانی، قراردادها — هیچ‌کدام در آموزش مدل نبوده‌اند.</li>
+<li><strong>دانشش تاریخ انقضا دارد.</strong> هر مدلی یک knowledge cutoff دارد.</li>
+</ol>
+<p>پس سوال ساده است: <strong>چطور داده‌ی خودمان را به مدل بدهیم؟</strong></p>
+<hr />
+<h2>۲. سه راه‌حلی که شکست خورد</h2>
+<h3>تلاش ۱ — همه چیز را داخل prompt بریز</h3>
+<p>۵۰۰ صفحه مستندات را می‌گذاری داخل prompt و سوال می‌پرسی.</p>
+<p><strong>چرا شکست می‌خورد:</strong> پنجره‌ی context محدود است؛ هزینه با تعداد توکن خطی بالا می‌رود؛ و پدیده‌ی <em>lost in the middle</em> — مدل چیزهایی را که وسط یک متن خیلی بلند هستند عملاً نادیده می‌گیرد.</p>
+<h3>تلاش ۲ — مدل را fine-tune کن</h3>
+<p>دانش را داخل خود وزن‌های مدل بگذاریم.</p>
+<p><strong>چرا شکست می‌خورد:</strong> گران و کند است؛ با هر تغییر داده باید دوباره train کنی؛ نمی‌توانی بگویی جواب از کدام سند آمد (بدون citation)؛ و حذف یک سند یعنی train کردن از اول.</p>
+<blockquote>
+<p>fine-tune برای یاد دادن <strong>سبک و رفتار</strong> خوب است، نه برای <strong>تغییر حقایق</strong>.</p>
+</blockquote>
+<h3>تلاش ۳ — جست‌وجوی کلیدواژه‌ای</h3>
+<p>اول بخش مرتبط را پیدا کن، بعد فقط همان را بفرست.</p>
+<p>نزدیک شدیم — ولی جست‌وجوی کلیدواژه‌ای <strong>کلمه</strong> را می‌فهمد، نه <strong>معنا</strong> را:</p>
+<pre><code class="language-text">user asks : &quot;how do I cancel my subscription?&quot;
+document  : &quot;To terminate your plan, go to Billing...&quot;
+
+keyword search  -&gt;  0 results        (no shared words)
+</code></pre>
+<p>یک منظور، دو واژگان متفاوت. دقیقاً همان مشکلی که در پروژه ۱۴ موقع حذف حافظه‌های تکراری دیدیم: <code>"prefers dark roast"</code> در برابر <code>"likes dark roasted coffee"</code>.</p>
+<h3>راه‌حل — جست‌وجو بر اساس معنا</h3>
+<p>اگر بتوانیم معنا را به عدد تبدیل کنیم، شباهت قابل <strong>محاسبه</strong> می‌شود. کاری که embedding انجام می‌دهد.</p>
+<hr />
+<h2>۳. Embedding</h2>
+<p>Embedding یعنی متن را به یک لیست عدد با طول ثابت تبدیل کن.</p>
+<pre><code class="language-python">embed(&quot;dark roast coffee&quot;)   # -&gt; [0.12, -0.84, 0.31, ...]   384 numbers
+embed(&quot;strong black coffee&quot;) # -&gt; [0.14, -0.81, 0.29, ...]   very close
+embed(&quot;car insurance&quot;)       # -&gt; [-0.77, 0.05, 0.62, ...]   far away
+</code></pre>
+<p><strong>قانون طلایی:</strong> متن‌هایی که معنای نزدیک دارند، بردارهای نزدیک می‌گیرند — حتی اگر یک کلمه‌ی مشترک نداشته باشند.</p>
+<h3>معادل ذهنی برای یک برنامه‌نویس ‎C#‎</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>GetHashCode()</code></th>
+<th><code>embed()</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>تغییر کوچک در ورودی</td>
+<td>خروجی کاملاً متفاوت</td>
+<td>خروجی کمی متفاوت</td>
+</tr>
+<tr>
+<td>خروجی</td>
+<td>یک عدد صحیح</td>
+<td>لیستی از اعداد اعشاری</td>
+</tr>
+<tr>
+<td>کاربرد</td>
+<td>تساوی دقیق</td>
+<td>سنجش <strong>شباهت</strong></td>
+</tr>
+</tbody>
+</table>
+<p>هدف hash این است که شبیه‌ها را از هم دور کند. هدف embedding این است که شبیه‌ها را کنار هم نگه دارد. دقیقاً برعکس هم.</p>
+<h3>طول همیشه ثابت است</h3>
+<pre><code class="language-python">len(model.encode(&quot;hi&quot;))                    # 384
+len(model.encode(&quot;a very long paragraph&quot;)) # 384
+</code></pre>
+<p>یک کلمه یا یک پاراگراف — همیشه همان طول. مدل کل معنا را در یک شکل ثابت فشرده می‌کند.</p>
+<p>هر کدام از آن ۳۸۴ عدد یک مختصات است. پس هر متن یک <strong>نقطه در فضای ۳۸۴ بعدی</strong> است و متن‌های هم‌معنا نقاط نزدیک به هم. این محورها معنای انسانی ندارند؛ مدل خودش آن‌ها را یاد گرفته.</p>
+<table>
+<thead>
+<tr>
+<th>ابعاد</th>
+<th>مدل</th>
+<th>ظرفیت</th>
+<th>هزینه</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>۳۸۴</td>
+<td><code>all-MiniLM-L6-v2</code></td>
+<td>کمتر</td>
+<td>سبک، محلی، رایگان</td>
+</tr>
+<tr>
+<td>۱۵۳۶</td>
+<td><code>text-embedding-3-small</code></td>
+<td>متوسط</td>
+<td>متوسط</td>
+</tr>
+<tr>
+<td>۳۰۷۲</td>
+<td><code>text-embedding-3-large</code></td>
+<td>بیشتر</td>
+<td>سنگین</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>بردارهای دو مدل مختلف با هم <strong>قابل مقایسه نیستند</strong>. اگر مدل embedding را عوض کنی، باید کل index را از اول بسازی.</p>
+</blockquote>
+<h3>اندازه‌گیری نزدیکی</h3>
+<p>Cosine similarity — زاویه‌ی بین دو بردار:</p>
+<pre><code class="language-text">1.0   identical meaning
+0.9   very close     &quot;cancel subscription&quot; vs &quot;terminate plan&quot;
+0.5   loosely related
+0.0   unrelated      &quot;coffee&quot; vs &quot;car insurance&quot;
+</code></pre>
+<p>لازم نیست ریاضیاتش را بلد باشی. عدد بزرگ‌تر = شبیه‌تر.</p>
+<hr />
+<h2>۴. RAG دقیقاً چیست</h2>
+<blockquote>
+<p><strong>RAG</strong> یعنی اول بخش‌های مرتبط داده‌ی خودت را پیدا کن، بعد فقط همان‌ها را به LLM بده تا جواب بسازد.</p>
+</blockquote>
+<p>مدل دیگر لازم نیست چیزی <em>بداند</em>. فقط باید بتواند متنی را که جلویش گذاشته‌ای بخواند.</p>
+<p>هر سیستم RAG دقیقاً دو فاز دارد:</p>
+<pre><code class="language-text">PHASE 1 - INDEXING  (offline, once per data change)
+
+  documents -&gt; split into chunks -&gt; embed each chunk -&gt; store vectors
+
+PHASE 2 - RETRIEVAL + GENERATION  (online, per question)
+
+  question -&gt; embed question -&gt; find top-k nearest chunks
+           -&gt; build prompt (chunks + question) -&gt; LLM -&gt; answer + sources
+</code></pre>
+<p>فاز ۱ مثل ساختن index روی یک جدول دیتابیس است: یک بار، آفلاین، گران.
+فاز ۲ مثل زدن یک query است: هر بار، آنلاین، سریع.</p>
+<hr />
+<h2>۵. سیستمی که ساختیم</h2>
+<h3>ساخت index</h3>
+<pre><code class="language-python">from sentence_transformers import SentenceTransformer
+
+embedding_model = SentenceTransformer(&quot;all-MiniLM-L6-v2&quot;)
+
+docs = [
+    {&quot;text&quot;: &quot;To terminate your plan, open Billing and click Close Account.&quot;,
+     &quot;source&quot;: &quot;billing.md&quot;},
+    {&quot;text&quot;: &quot;Refunds are processed within 14 business days of the request.&quot;,
+     &quot;source&quot;: &quot;refund-policy.md&quot;},
+    # ...
+]
+
+doc_vectors = embedding_model.encode([d[&quot;text&quot;] for d in docs])
+</code></pre>
+<h3>بازیابی</h3>
+<pre><code class="language-python">MIN_SCORE = 0.1   # only filter obvious garbage
+
+def search(question: str, top_k: int = 3):
+    scores = embedding_model.similarity(embedding_model.encode(question), doc_vectors)[0]
+    results = [(float(s), d) for s, d in zip(scores, docs)]
+    results = [r for r in results if r[0] &gt;= MIN_SCORE]
+    results.sort(key=lambda pair: pair[0], reverse=True)
+    return results[:top_k]
+</code></pre>
+<p>به <code>[0]</code> دقت کن. متد <code>similarity()</code> یک <strong>ماتریس</strong> برمی‌گرداند — هر ردیف یک سوال، هر ستون یک سند. ما یک سوال دادیم، پس ردیف صفر را می‌خواهیم.</p>
+<h3>تولید جواب</h3>
+<pre><code class="language-python">class GroundedAnswer(BaseModel):
+    answer: str = Field(description=&quot;the answer, or 'I don't know' if not in the context&quot;)
+    used_sources: list[str] = Field(
+        default_factory=list,
+        description=&quot;source names actually used to build the answer; empty list if none&quot;,
+    )
+
+answer_model = llm.with_structured_output(GroundedAnswer)
+
+context = &quot;\n&quot;.join(f&quot;[{c['source']}] {c['text']}&quot; for _, c in chunks)
+
+prompt = f&quot;&quot;&quot;Answer the question using ONLY the context below.
+If the answer is not in the context, say &quot;I don't know&quot;.
+Do not use any outside knowledge.
+Each context line starts with its source in square brackets.
+In used_sources return ONLY the sources you actually used. If none, return an empty list.
+
+Context:
+{context}
+
+Question: {question}&quot;&quot;&quot;
+
+result = answer_model.invoke(prompt)
+</code></pre>
+<p>کل سیستم همین است. بقیه‌ی پیچیدگی‌های RAG در محیط واقعی — reranking، hybrid search، query rewriting — همگی بهینه‌سازی روی همین اسکلت‌اند.</p>
+<hr />
+<h2>۶. درس مربوط به حد (threshold)</h2>
+<p>ارزشمندترین چیزی که این پروژه یاد داد، با دیدن اعداد واقعی.</p>
+<p>با <code>MIN_SCORE = 0.3</code>:</p>
+<pre><code class="language-text">0.325  &quot;You can change your password...&quot;   -&gt; irrelevant, but PASSED   (false positive)
+0.216  &quot;Our support team is available...&quot;  -&gt; correct, but DROPPED     (false negative)
+</code></pre>
+<p>یک حد، هم‌زمان هر دو خطا را ساخت. و هیچ عددی از این دو فرار نمی‌کند:</p>
+<table>
+<thead>
+<tr>
+<th>حد</th>
+<th>false positive</th>
+<th>false negative</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>پایین (۰.۱)</td>
+<td>زیاد</td>
+<td>کم</td>
+</tr>
+<tr>
+<td>بالا (۰.۵)</td>
+<td>کم</td>
+<td>زیاد</td>
+</tr>
+</tbody>
+</table>
+<p><strong>retrieval یک فیلتر قطعی نیست، یک رتبه‌بندی احتمالاتی است.</strong></p>
+<p>عدد جادویی هم وجود ندارد. حد درست به مدل embedding، به دامنه، و به نحوه‌ی بیان سوال بستگی دارد — باید با یک مجموعه‌ی تست واقعی اندازه‌گیری شود، نه حدس.</p>
+<h3>طراحی درست: دو لایه</h3>
+<pre><code class="language-text">retrieval  -&gt;  probabilistic ranking   (fast, cheap, imprecise)
+LLM        -&gt;  semantic filter         (slow, costly, accurate)
+</code></pre>
+<p>حد را <strong>پایین</strong> بگذار تا جواب درست را از دست ندهی، و بگذار prompt گراند‌شده چیزهای بی‌ربط را رد کند. این الگو اسم دارد: <strong>retrieve wide, filter narrow</strong>.</p>
+<p>و جواب می‌دهد. در سوال آب‌وهوا، <code>search</code> دو سند بی‌ربط به مدل داد و مدل باز هم گفت <em>«نمی‌دانم»</em> — کاری که عدد شباهت هرگز نمی‌توانست انجام دهد.</p>
+<hr />
+<h2>۷. Grounding و citation</h2>
+<p><strong>Grounding</strong> همان دستوری است که مدل را مجبور می‌کند فقط از روی متن داده‌شده جواب بدهد:</p>
+<pre><code class="language-text">If the answer is not in the context, say &quot;I don't know&quot;.
+Do not use any outside knowledge.
+</code></pre>
+<p>همان تکنیکی که در پروژه ۵ برای context trimming استفاده کردی. این چیزی است که جلوی پر کردن جای خالی با دانش خود مدل را می‌گیرد.</p>
+<h3>تله‌ی citation</h3>
+<p>اولین تلاش برای citation، <strong>منبع همه‌ی chunkهای بازیابی‌شده</strong> را چاپ می‌کرد:</p>
+<pre><code class="language-text">[Answer]  : To cancel your subscription, open Billing and click Close Account.
+[Sources] : billing.md, account-security.md, enterprise-plan.md
+</code></pre>
+<p>فقط <code>billing.md</code> استفاده شده بود. دو تای دیگر بازیابی شده بودند ولی بی‌ربط. کاربری که روی <code>enterprise-plan.md</code> کلیک کند چیزی پیدا نمی‌کند — بدتر از نداشتن citation، چون اعتماد را از بین می‌برد.</p>
+<p><strong>راه‌حل، در سه بخش:</strong></p>
+<ol start="۱">
+<li>هر خط context را با منبعش برچسب بزن تا مدل بداند متن از کجا آمده.</li>
+<li><code>used_sources</code> را با structured output بگیر، نه متن آزاد.</li>
+<li><strong>منابع برگشتی را با مجموعه‌ی بازیابی‌شده اعتبارسنجی کن.</strong> مدل می‌تواند یک اسم فایل از خودش بسازد.</li>
+</ol>
+<p>مورد ۳ همان درس پروژه ۱۴ است: <em>هیچ‌وقت خروجی LLM را مستقیم اعتماد نکن.</em></p>
+<hr />
+<h2>۸. کجا می‌شکند</h2>
+<table>
+<thead>
+<tr>
+<th>محدودیت</th>
+<th>چرا</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>سقف کیفیت = کیفیت بازیابی</td>
+<td>اگر تکه‌ی درست بازیابی نشود، هیچ مدلی جواب را نجات نمی‌دهد. بیشتر باگ‌های RAG باگ retrieval اند.</td>
+</tr>
+<tr>
+<td>سوالات تجمیعی</td>
+<td>«چند مشتری در ژوئن لغو کردند؟» — RAG چند تکه می‌بیند، نه کل داده را. این کار SQL است.</td>
+</tr>
+<tr>
+<td>تضاد بین اسناد</td>
+<td>مدل هر دو را می‌بیند و ممکن است اشتباه انتخاب کند. تاریخ‌گذاری و اولویت لازم است.</td>
+</tr>
+<tr>
+<td>index کهنه</td>
+<td>سند عوض شده، index نه — جواب قدیمی با اعتمادبه‌نفس کامل.</td>
+</tr>
+<tr>
+<td>سند واقعی نداریم</td>
+<td>شش رشته‌ی ثابت، بدون فایل، بدون chunking.</td>
+</tr>
+<tr>
+<td>vector store نداریم</td>
+<td>هر بار اجرا دوباره embed می‌شود. با ۱۰۰۰ سند غیرممکن است.</td>
+</tr>
+<tr>
+<td>جست‌وجو خطی است</td>
+<td>همه‌ی بردارها یکی‌یکی مقایسه می‌شوند.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>۹. واژه‌نامه</h2>
+<table>
+<thead>
+<tr>
+<th>واژه</th>
+<th>یعنی</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Embedding</strong></td>
+<td>تبدیل متن به لیست عدد که معنا را نگه می‌دارد</td>
+</tr>
+<tr>
+<td><strong>Vector</strong></td>
+<td>همان لیست عدد</td>
+</tr>
+<tr>
+<td><strong>Chunk</strong></td>
+<td>تکه‌ی کوچکی از یک سند</td>
+</tr>
+<tr>
+<td><strong>Chunking</strong></td>
+<td>عملیات تکه‌تکه کردن اسناد</td>
+</tr>
+<tr>
+<td><strong>Overlap</strong></td>
+<td>هم‌پوشانی بین تکه‌های پشت‌سرهم تا context قطع نشود</td>
+</tr>
+<tr>
+<td><strong>Vector store</strong></td>
+<td>دیتابیسی که بردارها را ذخیره و نزدیک‌ترین‌ها را پیدا می‌کند</td>
+</tr>
+<tr>
+<td><strong>Cosine similarity</strong></td>
+<td>معیار شباهت دو بردار (۱ = یکسان)</td>
+</tr>
+<tr>
+<td><strong>Top-k</strong></td>
+<td>تعداد نزدیک‌ترین تکه‌هایی که برمی‌داری</td>
+</tr>
+<tr>
+<td><strong>Retrieval</strong></td>
+<td>مرحله‌ی پیدا کردن تکه‌های مرتبط</td>
+</tr>
+<tr>
+<td><strong>Augmentation</strong></td>
+<td>چسباندن آن تکه‌ها به prompt</td>
+</tr>
+<tr>
+<td><strong>Generation</strong></td>
+<td>ساختن جواب توسط LLM</td>
+</tr>
+<tr>
+<td><strong>Semantic search</strong></td>
+<td>جست‌وجو بر اساس معنا (در برابر keyword)</td>
+</tr>
+<tr>
+<td><strong>Hybrid search</strong></td>
+<td>ترکیب کلیدواژه‌ای و معنایی</td>
+</tr>
+<tr>
+<td><strong>Reranking</strong></td>
+<td>مرتب‌سازی مجدد نتایج با مدلی دقیق‌تر</td>
+</tr>
+<tr>
+<td><strong>Grounding</strong></td>
+<td>وادار کردن مدل به جواب دادن فقط از روی context</td>
+</tr>
+<tr>
+<td><strong>Citation</strong></td>
+<td>اعلام اینکه جواب از کدام منابع آمده</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>قدم بعد: فایل‌های واقعی، chunking با overlap، و یک vector store تا embedding فقط یک بار انجام شود.</em></p>
+<footer>درسنامه RAG ۱۵ · قدم بعد: chunking، فایل واقعی و vector store</footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script>
+document.querySelectorAll('pre code').forEach(function (el) {
+  if (el.className.indexOf('language-text') === -1) hljs.highlightElement(el);
+});
+</script>
+</body>
+</html>
