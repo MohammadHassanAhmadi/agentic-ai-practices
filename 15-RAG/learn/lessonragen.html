@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG — Lesson 15</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+<style>
+:root{
+  --bg:#0d1117; --panel:#151b23; --panel2:#1b2430; --line:#2a3441;
+  --tx:#e8eef5; --tx2:#b6c2ce; --mut:#8896a5;
+  --acc:#6cb6ff; --grn:#57d364; --org:#e3b341; --red:#ff7b72; --pur:#d2a8ff;
+  --code-bg:#1e1e1e;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(108,182,255,.09), transparent 60%),
+    radial-gradient(900px 450px at 0% 10%, rgba(210,168,255,.06), transparent 60%),
+    var(--bg);
+  color:var(--tx); font-size:16px; padding:0 20px 90px;
+}
+.wrap{max-width:880px;margin:0 auto;padding-top:46px}
+
+h1{font-size:34px;font-weight:800;margin:0 0 14px;letter-spacing:-.5px}
+h2{font-size:24px;font-weight:800;margin:52px 0 14px;padding-bottom:12px;
+   border-bottom:1px solid var(--line)}
+h3{font-size:18px;font-weight:700;margin:30px 0 10px;color:var(--acc)}
+h4{font-size:15.5px;font-weight:700;margin:22px 0 8px;color:var(--org)}
+p{margin:12px 0}
+a{color:var(--acc)}
+hr{border:0;border-top:1px solid var(--line);margin:44px 0}
+
+blockquote{
+  background:linear-gradient(180deg,rgba(108,182,255,.10),rgba(108,182,255,.03));
+  border:1px solid rgba(108,182,255,.28); border-radius:12px;
+  padding:14px 22px; margin:20px 0; color:var(--tx2);
+}
+blockquote p{margin:7px 0}
+blockquote strong{color:var(--acc)}
+
+ul,ol{padding-inline-start:24px}
+li{margin:6px 0}
+li::marker{color:var(--mut)}
+
+pre{
+  direction:ltr; text-align:left;
+  background:var(--code-bg); border:1px solid #333; border-radius:11px;
+  padding:0; overflow:hidden; margin:18px 0;
+}
+pre code{
+  display:block; background:var(--code-bg); color:#D4D4D4;
+  padding:15px 17px; overflow-x:auto;
+  font-family:"JetBrains Mono",Consolas,ui-monospace,monospace;
+  font-size:12.8px; line-height:1.8;
+}
+.hljs-keyword,.hljs-meta .hljs-keyword{color:#C586C0}
+.hljs-built_in{color:#4EC9B0}
+.hljs-type,.hljs-title.class_{color:#4EC9B0}
+.hljs-literal{color:#569CD6}
+.hljs-number{color:#B5CEA8}
+.hljs-string,.hljs-meta .hljs-string{color:#CE9178}
+.hljs-comment{color:#6A9955;font-style:italic}
+.hljs-title,.hljs-title.function_{color:#DCDCAA}
+.hljs-params,.hljs-attr,.hljs-variable,.hljs-property{color:#9CDCFE}
+.hljs-subst{color:#D4D4D4}
+
+:not(pre) > code{
+  font-family:"JetBrains Mono",ui-monospace,monospace;
+  background:#1e1e1e; border:1px solid #333; padding:2px 7px;
+  border-radius:6px; color:#DCDCAA; font-size:12.5px;
+  direction:ltr; display:inline-block;
+}
+
+table{
+  width:100%; border-collapse:separate; border-spacing:0; margin:20px 0;
+  font-size:14.5px; border:1px solid var(--line); border-radius:11px; overflow:hidden;
+}
+th,td{padding:11px 15px; vertical-align:top; border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:none}
+th{background:var(--panel2); color:var(--acc); font-size:12.5px;
+   font-weight:700; letter-spacing:.05em; text-transform:uppercase}
+
+details{
+  background:var(--panel); border:1px solid var(--line); border-radius:13px;
+  margin:14px 0; overflow:hidden; transition:border-color .2s;
+}
+details[open]{border-color:rgba(108,182,255,.4)}
+summary{
+  cursor:pointer; list-style:none; padding:17px 22px;
+  font-size:17px; line-height:1.6; transition:background .18s;
+}
+summary::-webkit-details-marker{display:none}
+summary:hover{background:var(--panel2)}
+summary b{font-weight:700}
+details[open] summary{border-bottom:1px solid var(--line); background:var(--panel2)}
+details > *:not(summary){padding-inline:22px}
+details > p:first-of-type{padding-top:14px}
+details > *:last-child{padding-bottom:16px}
+details table,details pre{width:calc(100% - 44px); margin-inline:22px}
+
+footer{
+  text-align:center; color:var(--mut); font-size:13px;
+  margin-top:60px; padding-top:26px; border-top:1px solid var(--line);
+}
+
+body{font-family:"Inter","Segoe UI",system-ui,sans-serif;line-height:1.75}
+h2{border-left:4px solid var(--acc);border-bottom:1px solid var(--line);padding-left:12px}
+th,td{text-align:left}
+blockquote{border-left:3px solid var(--acc)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>RAG — Lesson 15</h1>
+<p><strong>Retrieval-Augmented Generation, built by hand</strong></p>
+<blockquote>
+<p>No RAG library. Six documents, a local embedding model, and one LLM call. The goal is to understand every moving part before letting a framework hide them.</p>
+</blockquote>
+<hr />
+<h2>1. The problem</h2>
+<p>An LLM has two built-in limits:</p>
+<ol>
+<li><strong>It knows nothing about your data.</strong> Your company docs, internal code, support tickets, contracts — none of it was in the training set.</li>
+<li><strong>Its knowledge expires.</strong> Every model has a knowledge cutoff.</li>
+</ol>
+<p>So the question is simple: <strong>how do we give the model our own data?</strong></p>
+<hr />
+<h2>2. Three approaches that failed</h2>
+<h3>Attempt 1 — Put everything in the prompt</h3>
+<p>Paste 500 pages of documentation into the prompt and ask the question.</p>
+<p><strong>Why it fails:</strong> the context window is finite; cost grows linearly with tokens; and <em>lost in the middle</em> — models reliably ignore material buried in the centre of a very long context.</p>
+<h3>Attempt 2 — Fine-tune the model</h3>
+<p>Bake the knowledge into the weights.</p>
+<p><strong>Why it fails:</strong> expensive and slow; every data change means retraining; you cannot say which document an answer came from (no citations); and deleting one document means retraining from scratch.</p>
+<blockquote>
+<p>Fine-tuning is for teaching <strong>style and behaviour</strong>, not <strong>changing facts</strong>.</p>
+</blockquote>
+<h3>Attempt 3 — Keyword search</h3>
+<p>Find the relevant section first, then send only that.</p>
+<p>Close — but keyword search matches <strong>words</strong>, not <strong>meaning</strong>:</p>
+<pre><code class="language-text">user asks : &quot;how do I cancel my subscription?&quot;
+document  : &quot;To terminate your plan, go to Billing...&quot;
+
+keyword search  -&gt;  0 results        (no shared words)
+</code></pre>
+<p>Same intent, different vocabulary. This is exactly the failure we hit in Project 14 when deduplicating memories: <code>"prefers dark roast"</code> vs <code>"likes dark roasted coffee"</code>.</p>
+<h3>The fix — search by meaning</h3>
+<p>If meaning can be turned into numbers, similarity becomes arithmetic. That is what embeddings do.</p>
+<hr />
+<h2>3. Embeddings</h2>
+<p>An embedding turns text into a fixed-length list of numbers.</p>
+<pre><code class="language-python">embed(&quot;dark roast coffee&quot;)   # -&gt; [0.12, -0.84, 0.31, ...]   384 numbers
+embed(&quot;strong black coffee&quot;) # -&gt; [0.14, -0.81, 0.29, ...]   very close
+embed(&quot;car insurance&quot;)       # -&gt; [-0.77, 0.05, 0.62, ...]   far away
+</code></pre>
+<p><strong>The rule:</strong> texts with close meaning get close vectors — even with zero words in common.</p>
+<h3>Mental model for a C# developer</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>GetHashCode()</code></th>
+<th><code>embed()</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Small input change</td>
+<td>completely different output</td>
+<td>slightly different output</td>
+</tr>
+<tr>
+<td>Output</td>
+<td>one integer</td>
+<td>list of floats</td>
+</tr>
+<tr>
+<td>Used for</td>
+<td>exact equality</td>
+<td>measuring <strong>similarity</strong></td>
+</tr>
+</tbody>
+</table>
+<p>A hash is designed to scatter similar inputs apart. An embedding is designed to keep them together. Exact opposites.</p>
+<h3>Fixed size, always</h3>
+<pre><code class="language-python">len(model.encode(&quot;hi&quot;))                    # 384
+len(model.encode(&quot;a very long paragraph&quot;)) # 384
+</code></pre>
+<p>One word or one paragraph — always the same length. The model compresses meaning into a fixed shape.</p>
+<p>Each of those 384 numbers is a coordinate. So every text is a <strong>point in 384-dimensional space</strong>, and similar texts are nearby points. The axes have no human meaning; the model learned them.</p>
+<table>
+<thead>
+<tr>
+<th>Dimensions</th>
+<th>Model</th>
+<th>Capacity</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>384</td>
+<td><code>all-MiniLM-L6-v2</code></td>
+<td>lower</td>
+<td>light, local, free</td>
+</tr>
+<tr>
+<td>1536</td>
+<td><code>text-embedding-3-small</code></td>
+<td>medium</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>3072</td>
+<td><code>text-embedding-3-large</code></td>
+<td>higher</td>
+<td>heavy</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Vectors from two different models are <strong>not comparable</strong>. Change the embedding model and you must rebuild the whole index.</p>
+</blockquote>
+<h3>Measuring closeness</h3>
+<p>Cosine similarity — the angle between two vectors:</p>
+<pre><code class="language-text">1.0   identical meaning
+0.9   very close     &quot;cancel subscription&quot; vs &quot;terminate plan&quot;
+0.5   loosely related
+0.0   unrelated      &quot;coffee&quot; vs &quot;car insurance&quot;
+</code></pre>
+<p>You do not need the maths. Higher number = more similar.</p>
+<hr />
+<h2>4. What RAG actually is</h2>
+<blockquote>
+<p><strong>RAG</strong> = find the relevant parts of your data first, then give only those to the LLM to write the answer.</p>
+</blockquote>
+<p>The model no longer needs to <em>know</em> anything. It only needs to read what you put in front of it.</p>
+<p>Every RAG system has exactly two phases:</p>
+<pre><code class="language-text">PHASE 1 - INDEXING  (offline, once per data change)
+
+  documents -&gt; split into chunks -&gt; embed each chunk -&gt; store vectors
+
+PHASE 2 - RETRIEVAL + GENERATION  (online, per question)
+
+  question -&gt; embed question -&gt; find top-k nearest chunks
+           -&gt; build prompt (chunks + question) -&gt; LLM -&gt; answer + sources
+</code></pre>
+<p>Phase 1 is building a database index: once, offline, expensive.
+Phase 2 is running a query: every time, online, fast.</p>
+<hr />
+<h2>5. The pipeline we built</h2>
+<h3>Index</h3>
+<pre><code class="language-python">from sentence_transformers import SentenceTransformer
+
+embedding_model = SentenceTransformer(&quot;all-MiniLM-L6-v2&quot;)
+
+docs = [
+    {&quot;text&quot;: &quot;To terminate your plan, open Billing and click Close Account.&quot;,
+     &quot;source&quot;: &quot;billing.md&quot;},
+    {&quot;text&quot;: &quot;Refunds are processed within 14 business days of the request.&quot;,
+     &quot;source&quot;: &quot;refund-policy.md&quot;},
+    # ...
+]
+
+doc_vectors = embedding_model.encode([d[&quot;text&quot;] for d in docs])
+</code></pre>
+<h3>Retrieve</h3>
+<pre><code class="language-python">MIN_SCORE = 0.1   # only filter obvious garbage
+
+def search(question: str, top_k: int = 3):
+    scores = embedding_model.similarity(embedding_model.encode(question), doc_vectors)[0]
+    results = [(float(s), d) for s, d in zip(scores, docs)]
+    results = [r for r in results if r[0] &gt;= MIN_SCORE]
+    results.sort(key=lambda pair: pair[0], reverse=True)
+    return results[:top_k]
+</code></pre>
+<p>Note the <code>[0]</code>. <code>similarity()</code> returns a <strong>matrix</strong> — one row per question, one column per document. We asked one question, so we take row zero.</p>
+<h3>Generate</h3>
+<pre><code class="language-python">class GroundedAnswer(BaseModel):
+    answer: str = Field(description=&quot;the answer, or 'I don't know' if not in the context&quot;)
+    used_sources: list[str] = Field(
+        default_factory=list,
+        description=&quot;source names actually used to build the answer; empty list if none&quot;,
+    )
+
+answer_model = llm.with_structured_output(GroundedAnswer)
+
+context = &quot;\n&quot;.join(f&quot;[{c['source']}] {c['text']}&quot; for _, c in chunks)
+
+prompt = f&quot;&quot;&quot;Answer the question using ONLY the context below.
+If the answer is not in the context, say &quot;I don't know&quot;.
+Do not use any outside knowledge.
+Each context line starts with its source in square brackets.
+In used_sources return ONLY the sources you actually used. If none, return an empty list.
+
+Context:
+{context}
+
+Question: {question}&quot;&quot;&quot;
+
+result = answer_model.invoke(prompt)
+</code></pre>
+<p>That is the whole system. Everything else in production RAG — reranking, hybrid search, query rewriting — is optimisation on top of this skeleton.</p>
+<hr />
+<h2>6. The threshold lesson</h2>
+<p>The most valuable thing this project taught, learned by watching real numbers.</p>
+<p>With <code>MIN_SCORE = 0.3</code>:</p>
+<pre><code class="language-text">0.325  &quot;You can change your password...&quot;   -&gt; irrelevant, but PASSED   (false positive)
+0.216  &quot;Our support team is available...&quot;  -&gt; correct, but DROPPED     (false negative)
+</code></pre>
+<p>One threshold produced both errors at once. And no threshold avoids them:</p>
+<table>
+<thead>
+<tr>
+<th>Threshold</th>
+<th>False positives</th>
+<th>False negatives</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>low (0.1)</td>
+<td>many</td>
+<td>few</td>
+</tr>
+<tr>
+<td>high (0.5)</td>
+<td>few</td>
+<td>many</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retrieval is not a deterministic filter. It is a probabilistic ranking.</strong></p>
+<p>There is also no universal number. The right threshold depends on the embedding model, the domain, and the phrasing of the question — it must be measured against a real test set, never guessed.</p>
+<h3>The correct design: two layers</h3>
+<pre><code class="language-text">retrieval  -&gt;  probabilistic ranking   (fast, cheap, imprecise)
+LLM        -&gt;  semantic filter         (slow, costly, accurate)
+</code></pre>
+<p>Set the threshold <strong>low</strong> so you don't lose correct answers, and let the grounded prompt reject what doesn't belong. The pattern has a name: <strong>retrieve wide, filter narrow</strong>.</p>
+<p>It works. Asked about the weather, <code>search</code> handed the model two irrelevant documents and the model still answered <em>"I don't know"</em> — something a similarity score could never do.</p>
+<hr />
+<h2>7. Grounding and citations</h2>
+<p><strong>Grounding</strong> is the instruction that forces the model to answer only from the supplied context:</p>
+<pre><code class="language-text">If the answer is not in the context, say &quot;I don't know&quot;.
+Do not use any outside knowledge.
+</code></pre>
+<p>This is the same technique used in Project 5 for context trimming. It is what stops the model filling gaps with its own training data.</p>
+<h3>The citation trap</h3>
+<p>A first attempt at citations printed <strong>every retrieved chunk's source</strong>:</p>
+<pre><code class="language-text">[Answer]  : To cancel your subscription, open Billing and click Close Account.
+[Sources] : billing.md, account-security.md, enterprise-plan.md
+</code></pre>
+<p>Only <code>billing.md</code> was used. The other two were retrieved but irrelevant. A user clicking <code>enterprise-plan.md</code> finds nothing — worse than showing no citation at all, because it destroys trust.</p>
+<p><strong>Fix, in three parts:</strong></p>
+<ol>
+<li>Label each context line with its source so the model can see where text came from.</li>
+<li>Ask for <code>used_sources</code> via structured output, not free text.</li>
+<li><strong>Validate the returned sources against the retrieved set.</strong> The model can invent a filename.</li>
+</ol>
+<p>Point 3 is the Project 14 lesson again: <em>never trust an LLM's output directly.</em></p>
+<hr />
+<h2>8. Where this design breaks</h2>
+<table>
+<thead>
+<tr>
+<th>Limitation</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Retrieval quality is the ceiling</td>
+<td>If the right chunk isn't retrieved, no model can save the answer. Most RAG bugs are retrieval bugs.</td>
+</tr>
+<tr>
+<td>Aggregate questions</td>
+<td><em>"How many customers cancelled in June?"</em> — RAG sees a few chunks, never the whole dataset. That is a SQL job.</td>
+</tr>
+<tr>
+<td>Contradictions between documents</td>
+<td>The model sees both and may pick wrong. Needs dating and priority.</td>
+</tr>
+<tr>
+<td>Stale index</td>
+<td>Document changed, index didn't — a confident, outdated answer.</td>
+</tr>
+<tr>
+<td>No real documents</td>
+<td>Six hardcoded strings, no files, no chunking.</td>
+</tr>
+<tr>
+<td>No vector store</td>
+<td>Everything is re-embedded on every run. Impossible at 1,000 documents.</td>
+</tr>
+<tr>
+<td>Linear search</td>
+<td>Every vector compared one by one.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>9. Glossary</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Embedding</strong></td>
+<td>Turning text into a list of numbers that preserves meaning</td>
+</tr>
+<tr>
+<td><strong>Vector</strong></td>
+<td>That list of numbers</td>
+</tr>
+<tr>
+<td><strong>Chunk</strong></td>
+<td>A small piece of a document</td>
+</tr>
+<tr>
+<td><strong>Chunking</strong></td>
+<td>Splitting documents into chunks</td>
+</tr>
+<tr>
+<td><strong>Overlap</strong></td>
+<td>Shared text between consecutive chunks so context isn't cut</td>
+</tr>
+<tr>
+<td><strong>Vector store</strong></td>
+<td>Database that stores vectors and finds nearest neighbours</td>
+</tr>
+<tr>
+<td><strong>Cosine similarity</strong></td>
+<td>Similarity measure between two vectors (1 = identical)</td>
+</tr>
+<tr>
+<td><strong>Top-k</strong></td>
+<td>How many nearest chunks you take</td>
+</tr>
+<tr>
+<td><strong>Retrieval</strong></td>
+<td>Finding the relevant chunks</td>
+</tr>
+<tr>
+<td><strong>Augmentation</strong></td>
+<td>Attaching those chunks to the prompt</td>
+</tr>
+<tr>
+<td><strong>Generation</strong></td>
+<td>The LLM writing the answer</td>
+</tr>
+<tr>
+<td><strong>Semantic search</strong></td>
+<td>Search by meaning (vs keyword)</td>
+</tr>
+<tr>
+<td><strong>Hybrid search</strong></td>
+<td>Keyword + semantic combined</td>
+</tr>
+<tr>
+<td><strong>Reranking</strong></td>
+<td>Re-ordering results with a more accurate model</td>
+</tr>
+<tr>
+<td><strong>Grounding</strong></td>
+<td>Forcing the model to answer only from context</td>
+</tr>
+<tr>
+<td><strong>Citation</strong></td>
+<td>Reporting which sources the answer came from</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>Next: real files, chunking with overlap, and a vector store so embedding happens once.</em></p>
+<footer>RAG Lesson 15 · next: chunking, files and a vector store</footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script>
+document.querySelectorAll('pre code').forEach(function (el) {
+  if (el.className.indexOf('language-text') === -1) hljs.highlightElement(el);
+});
+</script>
+</body>
+</html>

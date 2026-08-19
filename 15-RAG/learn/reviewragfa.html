@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>پروژه ۱۵ — بازبینی</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+<style>
+:root{
+  --bg:#0d1117; --panel:#151b23; --panel2:#1b2430; --line:#2a3441;
+  --tx:#e8eef5; --tx2:#b6c2ce; --mut:#8896a5;
+  --acc:#6cb6ff; --grn:#57d364; --org:#e3b341; --red:#ff7b72; --pur:#d2a8ff;
+  --code-bg:#1e1e1e;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(108,182,255,.09), transparent 60%),
+    radial-gradient(900px 450px at 0% 10%, rgba(210,168,255,.06), transparent 60%),
+    var(--bg);
+  color:var(--tx); font-size:16px; padding:0 20px 90px;
+}
+.wrap{max-width:880px;margin:0 auto;padding-top:46px}
+
+h1{font-size:34px;font-weight:800;margin:0 0 14px;letter-spacing:-.5px}
+h2{font-size:24px;font-weight:800;margin:52px 0 14px;padding-bottom:12px;
+   border-bottom:1px solid var(--line)}
+h3{font-size:18px;font-weight:700;margin:30px 0 10px;color:var(--acc)}
+h4{font-size:15.5px;font-weight:700;margin:22px 0 8px;color:var(--org)}
+p{margin:12px 0}
+a{color:var(--acc)}
+hr{border:0;border-top:1px solid var(--line);margin:44px 0}
+
+blockquote{
+  background:linear-gradient(180deg,rgba(108,182,255,.10),rgba(108,182,255,.03));
+  border:1px solid rgba(108,182,255,.28); border-radius:12px;
+  padding:14px 22px; margin:20px 0; color:var(--tx2);
+}
+blockquote p{margin:7px 0}
+blockquote strong{color:var(--acc)}
+
+ul,ol{padding-inline-start:24px}
+li{margin:6px 0}
+li::marker{color:var(--mut)}
+
+pre{
+  direction:ltr; text-align:left;
+  background:var(--code-bg); border:1px solid #333; border-radius:11px;
+  padding:0; overflow:hidden; margin:18px 0;
+}
+pre code{
+  display:block; background:var(--code-bg); color:#D4D4D4;
+  padding:15px 17px; overflow-x:auto;
+  font-family:"JetBrains Mono",Consolas,ui-monospace,monospace;
+  font-size:12.8px; line-height:1.8;
+}
+.hljs-keyword,.hljs-meta .hljs-keyword{color:#C586C0}
+.hljs-built_in{color:#4EC9B0}
+.hljs-type,.hljs-title.class_{color:#4EC9B0}
+.hljs-literal{color:#569CD6}
+.hljs-number{color:#B5CEA8}
+.hljs-string,.hljs-meta .hljs-string{color:#CE9178}
+.hljs-comment{color:#6A9955;font-style:italic}
+.hljs-title,.hljs-title.function_{color:#DCDCAA}
+.hljs-params,.hljs-attr,.hljs-variable,.hljs-property{color:#9CDCFE}
+.hljs-subst{color:#D4D4D4}
+
+:not(pre) > code{
+  font-family:"JetBrains Mono",ui-monospace,monospace;
+  background:#1e1e1e; border:1px solid #333; padding:2px 7px;
+  border-radius:6px; color:#DCDCAA; font-size:12.5px;
+  direction:ltr; display:inline-block;
+}
+
+table{
+  width:100%; border-collapse:separate; border-spacing:0; margin:20px 0;
+  font-size:14.5px; border:1px solid var(--line); border-radius:11px; overflow:hidden;
+}
+th,td{padding:11px 15px; vertical-align:top; border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:none}
+th{background:var(--panel2); color:var(--acc); font-size:12.5px;
+   font-weight:700; letter-spacing:.05em; text-transform:uppercase}
+
+details{
+  background:var(--panel); border:1px solid var(--line); border-radius:13px;
+  margin:14px 0; overflow:hidden; transition:border-color .2s;
+}
+details[open]{border-color:rgba(108,182,255,.4)}
+summary{
+  cursor:pointer; list-style:none; padding:17px 22px;
+  font-size:17px; line-height:1.6; transition:background .18s;
+}
+summary::-webkit-details-marker{display:none}
+summary:hover{background:var(--panel2)}
+summary b{font-weight:700}
+details[open] summary{border-bottom:1px solid var(--line); background:var(--panel2)}
+details > *:not(summary){padding-inline:22px}
+details > p:first-of-type{padding-top:14px}
+details > *:last-child{padding-bottom:16px}
+details table,details pre{width:calc(100% - 44px); margin-inline:22px}
+
+footer{
+  text-align:center; color:var(--mut); font-size:13px;
+  margin-top:60px; padding-top:26px; border-top:1px solid var(--line);
+}
+
+body{font-family:"Vazirmatn","Segoe UI",Tahoma,sans-serif;line-height:2.05}
+h2{border-right:4px solid var(--acc);border-bottom:1px solid var(--line);padding-right:12px}
+th,td{text-align:right}
+blockquote{border-right:3px solid var(--acc)}
+summary{display:flex;gap:10px;align-items:flex-start}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>پروژه ۱۵ — بازبینی</h1>
+<p><strong>ساخت دستی یک RAG مینیمال · مرداد ۲۰۲۶</strong></p>
+<hr />
+<h2>چیزی که ساخته شد</h2>
+<p>یک پایپ‌لاین کامل پرسش‌وپاسخ مبتنی بر بازیابی، در یک فایل، بدون هیچ فریم‌ورک RAG.</p>
+<pre><code class="language-text">6 documents -&gt; embed once -&gt; search(top_k) -&gt; grounded prompt -&gt; structured answer + citations
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>قطعه</th>
+<th>انتخاب</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Embedding</td>
+<td><code>sentence-transformers</code> / <code>all-MiniLM-L6-v2</code>، ۳۸۴ بعد، محلی</td>
+</tr>
+<tr>
+<td>Vector store</td>
+<td>ندارد — یک لیست پایتون و یک حلقه</td>
+</tr>
+<tr>
+<td>LLM</td>
+<td>Azure OpenAI <code>gpt-5.4-nano</code> (اول Gemini، بعد تعویض)</td>
+</tr>
+<tr>
+<td>خروجی ساختاریافته</td>
+<td>مدل Pydantic به نام <code>GroundedAnswer</code> با <code>with_structured_output</code></td>
+</tr>
+<tr>
+<td>مجموعه‌ی تست</td>
+<td>۴ سوال، شامل یک سوال عمداً بی‌ربط</td>
+</tr>
+</tbody>
+</table>
+<p><strong>نتیجه:</strong> هر چهار سوال درست. جواب صحیح، منبع واحدِ درست، و برای سوال بی‌ربط <code>I don't know</code> با لیست منابع خالی.</p>
+<hr />
+<h2>تصمیم‌هایی که درست بود</h2>
+<p><strong>Embedding محلی برای یادگیری.</strong> وقتی کردیت Azure تمام شد، رفتن سراغ مدل محلی انتخاب درستی بود — نه یک مصالحه. بازیابی همان بخشی است که در مرحله‌ی یادگیری صدها بار تکرار می‌شود، و محدودیت نرخ یا صورتحساب در آن حلقه یک مانع واقعی است. نگه داشتن مدل پولی برای تعداد کم فراخوانی LLM، تقسیم درستی است.</p>
+<p><strong>نوشتن <code>answer(question, context)</code> به‌جای <code>answer(question)</code>.</strong> بازیابی عمداً بیرون تابع تولید جواب نگه داشته شد. این یعنی مرحله‌ی generation بدون مدل embedding قابل تست است، و همان نظم مرزبندی است که در پروژه ۱۴ بین <code>Runtime</code> و <code>BaseStore</code> یاد گرفته شد. این بار بدون یادآوری اعمال شد.</p>
+<p><strong><code>time.sleep</code> در حلقه‌ی تست.</strong> محدودیت نرخ و هزینه قبل از اینکه تبدیل به مشکل شوند در نظر گرفته شدند.</p>
+<p><strong>پیش‌بینی نتیجه‌ی حد.</strong> وقتی پرسیده شد فیلتر کردن چه می‌کند، جواب — «باید یک حد بگذارم» — غریزه‌ی درستی بود، و تله‌ی بعدی به‌محض دیدن اعداد روی صفحه فوراً درک شد.</p>
+<hr />
+<h2>باگ‌هایی که خوردیم و درس هرکدام</h2>
+<table>
+<thead>
+<tr>
+<th>باگ</th>
+<th>ریشه</th>
+<th>درس</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>فقط یک نتیجه‌ی سرچ برمی‌گشت</td>
+<td>نبودن <code>[0]</code> — متد <code>similarity()</code> ماتریس برمی‌گرداند نه لیست</td>
+<td>ببین یک API واقعاً چه برمی‌گرداند؛ خطای shape بی‌صدا شکست می‌خورد، نه با فریاد</td>
+</tr>
+<tr>
+<td>هر بار همان سوال اول سرچ می‌شد</td>
+<td><code>questions[0]</code> به‌جای <code>q</code> داخل حلقه</td>
+<td>لغزش کلاسیک متغیر حلقه</td>
+</tr>
+<tr>
+<td>مرتب‌سازی بر اساس tuple به‌جای امتیاز</td>
+<td><code>sorted(..., reverse=True)</code> بدون <code>key</code></td>
+<td>مقایسه‌ی tuple در تساوی به عنصر دوم می‌افتد — صریح بنویس</td>
+</tr>
+<tr>
+<td>منطق router برعکس</td>
+<td><code>if candidate is None: return "save"</code> (پروژه ۱۴، همین الگو تکرار شد)</td>
+<td>شرط را بلند بخوان قبل از اینکه بهش اعتماد کنی</td>
+</tr>
+<tr>
+<td>citation همه‌ی منابع بازیابی‌شده را می‌آورد</td>
+<td>context برچسب منبع نداشت؛ مدل حدس می‌زد</td>
+<td>بازیابی‌شده ≠ استفاده‌شده</td>
+</tr>
+</tbody>
+</table>
+<p>هیچ‌کدام شکست مفهومی نبودند. همه مکانیکی بودند، و همه با نگاه کردن به خروجی پیدا شدند نه با حدس زدن.</p>
+<hr />
+<h2>مفاهیمی که نشان داده شد</h2>
+<ul>
+<li><strong>Embedding به‌عنوان فضای شباهت</strong> — شامل اینکه چرا عکس hash است، چرا طول خروجی ثابت است، و چرا بردارهای دو مدل قابل مقایسه نیستند.</li>
+<li><strong>Cosine similarity به‌عنوان رتبه‌بندی، نه حقیقت</strong> — عدد مطلق بی‌معناست؛ ترتیب مهم است.</li>
+<li><strong>توازن حد</strong> — به‌صورت تجربی دیده شد: یک حد در یک اجرا هم false positive ساخت (۰.۳۲۵، بی‌ربط) و هم false negative (۰.۲۱۶، درست).</li>
+<li><strong>retrieve wide, filter narrow</strong> — پایین آوردن حد و سپردن فیلتر معنایی به prompt گراند‌شده.</li>
+<li><strong>Grounding</strong> — همان تکنیک قانون context trimming در پروژه ۵، دوباره اعمال شد.</li>
+<li><strong>خروجی ساختاریافته برای یک تصمیم برنامه‌ای</strong> — <code>GroundedAnswer</code>، همان الگوی <code>MemoryDecision</code> در پروژه ۱۴.</li>
+<li><strong>هرگز به خروجی مدل اعتماد نکن</strong> — اعتبارسنجی <code>used_sources</code> در برابر مجموعه‌ی بازیابی‌شده.</li>
+</ul>
+<hr />
+<h2>نقاط ضعفی که باید مراقبشان بود</h2>
+<p><strong>۱. دستورها ناقص اعمال شدند.</strong> وقتی سه تغییر خواسته شد — برچسب زدن context با منبع، گفتن به prompt که فقط منابع استفاده‌شده را برگرداند، و اعتبارسنجی خروجی — نسخه‌ی اول با <strong>هیچ‌کدام</strong> آمد، در حالی که بقیه‌ی کد درست بازنویسی شده بود. پایپ‌لاین اجرا شد، خروجی قابل‌قبول به نظر رسید، و بخش‌های جامانده بدون چک کردن نامرئی بودند. <em>عادتی که باید ساخته شود: قبل از اجرا، لیست خواسته‌ها را دوباره بخوان و تک‌تک تیک بزن.</em></p>
+<p><strong>۲. کپی کردن بدون پرسیدن چرا.</strong> تفاوت پارامتر <code>runtime</code> و <code>BaseStore</code> در پروژه ۱۴ از جایی کپی شده بود و دلیلش تا وقتی پرسیده نشد معلوم نبود. همین ریسک اینجا هم با <code>with_structured_output</code> وجود دارد. <em>راه‌حلش ارزان است: وقتی یک امضای ناآشنا را paste می‌کنی، یک سوال بپرس — «چرا این آرگومان و نه آن یکی؟»</em></p>
+<p><strong>۳. خواندن شکل خروجی.</strong> باگ <code>[0]</code> و باگ tensor داخل tuple هر دو یک عادت مشترک دارند: فرض کردن نوع خروجی به‌جای چاپ کردنش. در یک کتابخانه‌ی ناآشنا، <code>print(type(x))</code> و <code>print(x.shape)</code> هیچ هزینه‌ای ندارند.</p>
+<p>هیچ‌کدام از این‌ها شکاف مفهومی نیستند. عادت‌های فرایندی‌اند، و همان چیزی هستند که فرق می‌گذارد بین کدی که کار می‌کند و کدی که بار اول کار می‌کند.</p>
+<hr />
+<h2>جایی که این پروژه متوقف می‌شود</h2>
+<table>
+<thead>
+<tr>
+<th>کمبود</th>
+<th>چرا مهم است</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>سند واقعی</td>
+<td>شش رشته‌ی ثابت — بدون فایل، بدون فرمت، بدون ورودی کثیف</td>
+</tr>
+<tr>
+<td>Chunking</td>
+<td>یک PDF صد صفحه‌ای را نمی‌شود در یک بردار embed کرد</td>
+</tr>
+<tr>
+<td>Vector store</td>
+<td>هر اجرا همه چیز دوباره embed می‌شود؛ با ۱۰۰۰ سند غیرممکن</td>
+</tr>
+<tr>
+<td>ایندکس نزدیک‌ترین همسایه</td>
+<td>جست‌وجو روی همه‌ی بردارها خطی است</td>
+</tr>
+<tr>
+<td>ارزیابی</td>
+<td>مجموعه‌ی برچسب‌خورده نداریم، پس k و حد و اندازه‌ی chunk با حس انتخاب می‌شوند</td>
+</tr>
+<tr>
+<td>Hybrid search</td>
+<td>توکن‌های دقیق — کد خطا، شناسه‌ی محصول — با embedding تنها خوب پیدا نمی‌شوند</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>جمع‌بندی</h2>
+<p>مکانیزم اصلی RAG فهمیده شده، نه فقط استفاده شده. ارزشمندترین لحظه‌ی پروژه، پایپ‌لاین کارکننده نبود — دیدن این بود که یک حد واحد هم‌زمان دو خطای متضاد ساخت، و گرفتن نتیجه‌ی معماری درست از آن. همین فرق است بین کسی که درباره‌ی RAG خوانده و کسی که ساخته‌اش.</p>
+<p><strong>قدم بعد:</strong> فایل‌های واقعی روی دیسک، chunking با overlap، و یک vector store تا embedding فقط یک بار انجام شود.</p>
+<footer>بازبینی پروژه ۱۵ · ساخت دستی یک RAG مینیمال</footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script>
+document.querySelectorAll('pre code').forEach(function (el) {
+  if (el.className.indexOf('language-text') === -1) hljs.highlightElement(el);
+});
+</script>
+</body>
+</html>

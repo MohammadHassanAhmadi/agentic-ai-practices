@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG — Interview Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+<style>
+:root{
+  --bg:#0d1117; --panel:#151b23; --panel2:#1b2430; --line:#2a3441;
+  --tx:#e8eef5; --tx2:#b6c2ce; --mut:#8896a5;
+  --acc:#6cb6ff; --grn:#57d364; --org:#e3b341; --red:#ff7b72; --pur:#d2a8ff;
+  --code-bg:#1e1e1e;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(108,182,255,.09), transparent 60%),
+    radial-gradient(900px 450px at 0% 10%, rgba(210,168,255,.06), transparent 60%),
+    var(--bg);
+  color:var(--tx); font-size:16px; padding:0 20px 90px;
+}
+.wrap{max-width:880px;margin:0 auto;padding-top:46px}
+
+h1{font-size:34px;font-weight:800;margin:0 0 14px;letter-spacing:-.5px}
+h2{font-size:24px;font-weight:800;margin:52px 0 14px;padding-bottom:12px;
+   border-bottom:1px solid var(--line)}
+h3{font-size:18px;font-weight:700;margin:30px 0 10px;color:var(--acc)}
+h4{font-size:15.5px;font-weight:700;margin:22px 0 8px;color:var(--org)}
+p{margin:12px 0}
+a{color:var(--acc)}
+hr{border:0;border-top:1px solid var(--line);margin:44px 0}
+
+blockquote{
+  background:linear-gradient(180deg,rgba(108,182,255,.10),rgba(108,182,255,.03));
+  border:1px solid rgba(108,182,255,.28); border-radius:12px;
+  padding:14px 22px; margin:20px 0; color:var(--tx2);
+}
+blockquote p{margin:7px 0}
+blockquote strong{color:var(--acc)}
+
+ul,ol{padding-inline-start:24px}
+li{margin:6px 0}
+li::marker{color:var(--mut)}
+
+pre{
+  direction:ltr; text-align:left;
+  background:var(--code-bg); border:1px solid #333; border-radius:11px;
+  padding:0; overflow:hidden; margin:18px 0;
+}
+pre code{
+  display:block; background:var(--code-bg); color:#D4D4D4;
+  padding:15px 17px; overflow-x:auto;
+  font-family:"JetBrains Mono",Consolas,ui-monospace,monospace;
+  font-size:12.8px; line-height:1.8;
+}
+.hljs-keyword,.hljs-meta .hljs-keyword{color:#C586C0}
+.hljs-built_in{color:#4EC9B0}
+.hljs-type,.hljs-title.class_{color:#4EC9B0}
+.hljs-literal{color:#569CD6}
+.hljs-number{color:#B5CEA8}
+.hljs-string,.hljs-meta .hljs-string{color:#CE9178}
+.hljs-comment{color:#6A9955;font-style:italic}
+.hljs-title,.hljs-title.function_{color:#DCDCAA}
+.hljs-params,.hljs-attr,.hljs-variable,.hljs-property{color:#9CDCFE}
+.hljs-subst{color:#D4D4D4}
+
+:not(pre) > code{
+  font-family:"JetBrains Mono",ui-monospace,monospace;
+  background:#1e1e1e; border:1px solid #333; padding:2px 7px;
+  border-radius:6px; color:#DCDCAA; font-size:12.5px;
+  direction:ltr; display:inline-block;
+}
+
+table{
+  width:100%; border-collapse:separate; border-spacing:0; margin:20px 0;
+  font-size:14.5px; border:1px solid var(--line); border-radius:11px; overflow:hidden;
+}
+th,td{padding:11px 15px; vertical-align:top; border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:none}
+th{background:var(--panel2); color:var(--acc); font-size:12.5px;
+   font-weight:700; letter-spacing:.05em; text-transform:uppercase}
+
+details{
+  background:var(--panel); border:1px solid var(--line); border-radius:13px;
+  margin:14px 0; overflow:hidden; transition:border-color .2s;
+}
+details[open]{border-color:rgba(108,182,255,.4)}
+summary{
+  cursor:pointer; list-style:none; padding:17px 22px;
+  font-size:17px; line-height:1.6; transition:background .18s;
+}
+summary::-webkit-details-marker{display:none}
+summary:hover{background:var(--panel2)}
+summary b{font-weight:700}
+details[open] summary{border-bottom:1px solid var(--line); background:var(--panel2)}
+details > *:not(summary){padding-inline:22px}
+details > p:first-of-type{padding-top:14px}
+details > *:last-child{padding-bottom:16px}
+details table,details pre{width:calc(100% - 44px); margin-inline:22px}
+
+footer{
+  text-align:center; color:var(--mut); font-size:13px;
+  margin-top:60px; padding-top:26px; border-top:1px solid var(--line);
+}
+
+body{font-family:"Inter","Segoe UI",system-ui,sans-serif;line-height:1.75}
+h2{border-left:4px solid var(--acc);border-bottom:1px solid var(--line);padding-left:12px}
+th,td{text-align:left}
+blockquote{border-left:3px solid var(--acc)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>RAG — Interview Practice</h1>
+<p><strong>21 questions in 4 levels, plus a live design scenario</strong></p>
+<blockquote>
+<p><strong>How to use this:</strong> answer out loud, in your own words, <em>before</em> opening the card.
+If your answer matches the <strong>Short answer</strong>, you're fine. If you missed the <strong>Bonus</strong>, that's where your depth is missing.
+The goal isn't memorising. It's being able to explain <strong>why</strong>.</p>
+</blockquote>
+<hr />
+<h2>The system we're discussing</h2>
+<pre><code class="language-text">PHASE 1 - INDEXING   documents -&gt; chunks -&gt; embed -&gt; vector store
+
+PHASE 2 - QUERY      question -&gt; embed -&gt; top-k nearest chunks
+                              -&gt; grounded prompt -&gt; LLM -&gt; answer + sources
+</code></pre>
+<hr />
+<h2>Level 1 — Fundamentals</h2>
+<details>
+<summary><b>1. What is RAG, in one sentence?</b></summary>
+<p><strong>Short answer</strong> — Find the relevant parts of your own data first, then give only those to the LLM to write the answer.</p>
+<p><strong>Bonus</strong> — The point is that the model no longer needs to <em>know</em> anything; it only needs to read what you put in front of it. That is what makes the knowledge updatable without retraining.</p>
+</details>
+<details>
+<summary><b>2. Why not just put all the documents in the prompt?</b></summary>
+<p><strong>Short answer</strong> — The context window is finite, cost grows linearly with tokens, and models reliably ignore material buried in the middle of a very long context (<em>lost in the middle</em>).</p>
+<p><strong>Bonus</strong> — Even when everything fits, accuracy drops. More irrelevant text in the prompt means more noise competing with the right answer.</p>
+</details>
+<details>
+<summary><b>3. Why not fine-tune the model on your data?</b></summary>
+<p><strong>Short answer</strong> — Fine-tuning is expensive and slow, has to be redone on every data change, produces no citations, and can't unlearn a deleted document.</p>
+<p><strong>Bonus</strong> — Fine-tuning teaches <strong>style and behaviour</strong>. RAG supplies <strong>facts</strong>. They solve different problems and are often used together.</p>
+</details>
+<details>
+<summary><b>4. What is an embedding?</b></summary>
+<p><strong>Short answer</strong> — A fixed-length list of numbers representing the meaning of a text. Texts with similar meaning get vectors that are close together, even with no words in common.</p>
+<p><strong>Bonus</strong> — It's the opposite of a hash. A hash scatters similar inputs apart; an embedding keeps them together. The output size is constant regardless of input length — one word and one paragraph both produce, say, 384 numbers.</p>
+</details>
+<details>
+<summary><b>5. How do you measure how close two texts are?</b></summary>
+<p><strong>Short answer</strong> — Cosine similarity: the angle between the two vectors. 1.0 means identical meaning, 0.0 means unrelated.</p>
+<p><strong>Bonus</strong> — The absolute number is not meaningful on its own — 0.6 is not universally "good". What matters is the <strong>relative ranking</strong> among candidates for the same question.</p>
+</details>
+<details>
+<summary><b>6. What are the two phases of a RAG system?</b></summary>
+<p><strong>Short answer</strong> — <strong>Indexing</strong> (offline): split documents into chunks, embed each, store the vectors. <strong>Retrieval + generation</strong> (online): embed the question, find the top-k nearest chunks, put them in the prompt, call the LLM.</p>
+<p><strong>Bonus</strong> — Same split as a database: building an index is a one-time expensive offline job; running a query is fast and happens per request.</p>
+</details>
+<hr />
+<h2>Level 2 — Design decisions</h2>
+<details>
+<summary><b>7. Why split documents into chunks at all?</b></summary>
+<p><strong>Short answer</strong> — Three reasons: embedding models have a token limit; a long document's vector becomes an average of everything and loses precision; and you want to send three relevant paragraphs to the LLM, not a hundred pages.</p>
+<p><strong>Bonus</strong> — The middle reason is the one people forget. A whole-document vector is semantically blurry — it retrieves badly even when the document is the right one.</p>
+</details>
+<details>
+<summary><b>8. How do you choose chunk size, and what is overlap for?</b></summary>
+<p><strong>Short answer</strong> — It's a trade-off. Too small and context is lost ("this" refers to what?); too large and you add noise and retrieve imprecisely. Typically a few hundred tokens with a small overlap between consecutive chunks so a sentence isn't cut in half.</p>
+<p><strong>Bonus</strong> — There is no universal size. It depends on document structure — legal contracts, chat logs and code all want different splits. Splitting on natural boundaries (headings, paragraphs) usually beats fixed-length splitting.</p>
+</details>
+<details>
+<summary><b>9. What is top-k and how do you pick it?</b></summary>
+<p><strong>Short answer</strong> — How many nearest chunks you pass to the LLM. Usually 3–5. Too few risks missing the answer; too many adds noise and cost.</p>
+<p><strong>Bonus</strong> — Raising k is cheap insurance <em>if</em> your prompt is well grounded, because the model can discard the extras. Without grounding, a high k actively hurts.</p>
+</details>
+<details>
+<summary><b>10. What is grounding and why does it matter?</b></summary>
+<p><strong>Short answer</strong> — An instruction that forces the model to answer only from the supplied context and to say "I don't know" when the answer isn't there.</p>
+<p><strong>Bonus</strong> — Without it the model fills gaps from its training data, and you get a confident answer that isn't backed by your documents — the worst possible failure mode, because it looks correct.</p>
+</details>
+<details>
+<summary><b>11. How do you produce citations you can trust?</b></summary>
+<p><strong>Short answer</strong> — Label each context line with its source, ask the model via structured output which sources it actually used, then validate those names against the chunks you actually retrieved.</p>
+<p><strong>Bonus</strong> — The naive version — printing every retrieved chunk's source — is wrong. Retrieved is not the same as used. Showing a user a source that doesn't contain the answer is worse than showing none, because it destroys trust. And the validation step matters: a model can invent a filename.</p>
+</details>
+<details>
+<summary><b>12. What is a vector database and how does it differ from a normal one?</b></summary>
+<p><strong>Short answer</strong> — A normal database answers "which row has id = 5". A vector database answers "which five vectors are nearest to this one". The index is over a vector space rather than a column.</p>
+<p><strong>Bonus</strong> — At small scale you don't need one — a list plus a loop works, which is exactly what this project does. You need one when re-embedding on every run becomes wasteful and linear scanning becomes slow. Options range from Chroma / FAISS (local) to pgvector (a Postgres extension) to Qdrant / Pinecone (production).</p>
+</details>
+<hr />
+<h2>Level 3 — Engineering</h2>
+<details>
+<summary><b>13. Why isn't a similarity threshold enough to filter irrelevant results?</b></summary>
+<p><strong>Short answer</strong> — Because it produces false positives and false negatives at the same time, and no value avoids both. In our test, a threshold of 0.3 let an irrelevant document through at 0.325 and dropped a correct one at 0.216.</p>
+<p><strong>Bonus</strong> — There's also no universal number: the right threshold depends on the embedding model, the domain, and the phrasing of the question, and must be measured against a real test set. The correct design is two layers — set the threshold low so you don't lose correct answers, and let the grounded LLM reject what doesn't belong. <strong>Retrieve wide, filter narrow.</strong></p>
+</details>
+<details>
+<summary><b>14. Can you change the embedding model later?</b></summary>
+<p><strong>Short answer</strong> — Only by rebuilding the entire index. Vectors from two different models live in different spaces and are not comparable.</p>
+<p><strong>Bonus</strong> — This makes the embedding model a long-lived architectural commitment, not a config flag. It also means you must store which model produced an index, or you will one day compare incompatible vectors and get silent nonsense.</p>
+</details>
+<details>
+<summary><b>15. Why does a similarity call return a matrix rather than a list?</b></summary>
+<p><strong>Short answer</strong> — Because it's built to compare many questions against many documents in one operation. Rows are questions, columns are documents. With a single question you take row zero.</p>
+<p><strong>Bonus</strong> — Batching matters in practice: embedding and comparing in one vectorised call is dramatically faster than looping, which is why the API is shaped this way.</p>
+</details>
+<details>
+<summary><b>16. Where do most RAG bugs come from?</b></summary>
+<p><strong>Short answer</strong> — Retrieval, not generation. If the right chunk never reaches the prompt, no model can recover the answer. Retrieval quality is the ceiling on the whole system.</p>
+<p><strong>Bonus</strong> — This is why debugging must start by printing the retrieved chunks and their scores. Blaming the model — or swapping in a bigger one — is the classic wasted afternoon.</p>
+</details>
+<hr />
+<h2>Level 4 — Trap questions</h2>
+<details>
+<summary><b>17. "How many customers cancelled in June?" — will RAG answer this?</b></summary>
+<p><strong>Short answer</strong> — No, and it will fail <em>confidently</em>. RAG retrieves a handful of chunks; it never sees the whole dataset. Counting and aggregation are a database job.</p>
+<p><strong>Bonus</strong> — The right architecture routes the question: aggregate questions go to SQL (often via text-to-SQL), descriptive questions go to RAG. Knowing which questions your system <em>can't</em> answer is part of designing it.</p>
+</details>
+<details>
+<summary><b>18. Two retrieved documents contradict each other. What happens?</b></summary>
+<p><strong>Short answer</strong> — The model sees both and may pick either. Similarity says nothing about which is true or current.</p>
+<p><strong>Bonus</strong> — Mitigations: store a timestamp on each chunk and prefer the most recent; give documents a priority or authority level; and instruct the model to surface the conflict rather than silently choosing. Same problem as memory contradictions in the long-term memory project.</p>
+</details>
+<details>
+<summary><b>19. Your RAG gives a wrong answer. How do you debug it?</b></summary>
+<p><strong>Short answer</strong> — In order: (1) print the retrieved chunks — was the right one there at all? (2) if not, it's a retrieval problem: chunking, the embedding model, or k. (3) if it was there and the answer is still wrong, it's a prompt or grounding problem.</p>
+<p><strong>Bonus</strong> — Separating these two failure classes is the whole skill. They have completely different fixes, and reaching for a better LLM when the chunk was never retrieved is the most common mistake in the field.</p>
+</details>
+<details>
+<summary><b>20. How do you evaluate a RAG system?</b></summary>
+<p><strong>Short answer</strong> — Evaluate the two stages separately. Retrieval: for a set of questions with known correct chunks, measure how often the right chunk appears in the top-k. Generation: check the answer is supported by the retrieved context and that "I don't know" is returned when it should be.</p>
+<p><strong>Bonus</strong> — You need a small labelled question set before tuning anything — otherwise threshold, k and chunk size are being chosen by feel. Also test the negative cases explicitly: off-topic questions <em>must</em> return "I don't know".</p>
+</details>
+<details>
+<summary><b>21. Keyword search or semantic search — which is better?</b></summary>
+<p><strong>Short answer</strong> — Neither on its own. Semantic search handles paraphrasing; keyword search handles exact tokens like product codes, error numbers, and rare proper nouns, which embeddings often blur.</p>
+<p><strong>Bonus</strong> — Production systems typically run <strong>hybrid search</strong> — both, with the results merged and reranked. Saying "semantic is better" is the answer of someone who has only used it on prose.</p>
+</details>
+<hr />
+<h2>Design scenario</h2>
+<blockquote>
+<p><strong>The problem:</strong> Build an internal assistant over your company's documentation — a few thousand pages of Markdown across many repositories, updated daily. Answers must cite their source. Some documents are confidential and only visible to certain teams.</p>
+</blockquote>
+<details>
+<summary><b>How to walk through it — step by step</b></summary>
+<p><strong>1. Ingestion and chunking</strong></p>
+<p>Split on structure, not fixed length — Markdown headings give natural boundaries. Keep a small overlap. Store rich metadata with every chunk: source path, heading, last-modified date, team/visibility.</p>
+<pre><code class="language-text">chunk = {
+    &quot;text&quot;:      &quot;...&quot;,
+    &quot;source&quot;:    &quot;repo/docs/billing.md#refunds&quot;,
+    &quot;team&quot;:      &quot;finance&quot;,
+    &quot;updated_at&quot;: &quot;...&quot;,
+}
+</code></pre>
+<p><strong>2. Access control</strong></p>
+<p>This is the part people forget. Filtering <em>after</em> retrieval is a leak waiting to happen — the confidential text has already been placed in the prompt. Filter <strong>inside the query</strong>, using metadata, so restricted chunks are never retrieved for an unauthorised user.</p>
+<p><strong>3. Freshness</strong></p>
+<p>Docs change daily, so indexing can't be a one-off script. Re-index changed files only, keyed by path plus content hash. A stale index produces confident outdated answers — one of the worst failure modes.</p>
+<p><strong>4. Retrieval</strong></p>
+<p>Hybrid search: semantic for paraphrased questions, keyword for error codes and identifiers. Retrieve wide (low threshold, k around 5), then let the grounded prompt narrow.</p>
+<p><strong>5. Generation and citations</strong></p>
+<p>Ground hard ("only from context, otherwise say you don't know"). Get <code>used_sources</code> via structured output and validate against the retrieved set before displaying links.</p>
+<p><strong>6. Evaluation</strong></p>
+<p>Build a labelled set of real questions from support channels. Measure retrieval hit rate separately from answer quality. Include off-topic questions that must return "I don't know".</p>
+<p><strong>7. What it still won't do</strong></p>
+<p>Aggregate questions ("how many services use Postgres?") need a different path. Say so explicitly rather than letting the system guess.</p>
+<p><strong>Closing line</strong> — <em>"In RAG, the model is rarely the bottleneck. Retrieval quality, metadata and freshness are the system."</em></p>
+</details>
+<hr />
+<h2>Self-check</h2>
+<p>Without looking at this page, can you:</p>
+<ul>
+<li style="list-style:none">&#9744; Explain RAG and its two phases in one minute</li>
+<li style="list-style:none">&#9744; Explain an embedding using the hash comparison</li>
+<li style="list-style:none">&#9744; Say why a similarity threshold can't be a filter on its own</li>
+<li style="list-style:none">&#9744; Explain what grounding is and what breaks without it</li>
+<li style="list-style:none">&#9744; Describe how to produce citations you can trust, including the validation step</li>
+<li style="list-style:none">&#9744; Name the class of question RAG cannot answer, and what to use instead</li>
+<li style="list-style:none">&#9744; Debug a wrong answer by separating retrieval failure from generation failure</li>
+<li style="list-style:none">&#9744; Describe how you'd evaluate the two stages separately</li>
+<li style="list-style:none">&#9744; Design the scenario above on paper in ten minutes</li>
+</ul>
+<footer>RAG interview practice · 21 questions + design scenario</footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script>
+document.querySelectorAll('pre code').forEach(function (el) {
+  if (el.className.indexOf('language-text') === -1) hljs.highlightElement(el);
+});
+</script>
+</body>
+</html>
