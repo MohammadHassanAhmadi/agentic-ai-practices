@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>پروژه ۱۶ — Chunking و Vector Store</title>
+<style>
+  :root{
+    --bg:#1e1e1e; --panel:#252526; --panel2:#2d2d30; --line:#3c3c3c;
+    --fg:#d4d4d4; --muted:#9d9d9d; --accent:#4ec9b0; --accent2:#569cd6;
+    --warn:#ce9178; --ok:#6a9955; --yellow:#dcdcaa;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:"Vazirmatn","Segoe UI",Tahoma,sans-serif;
+    line-height:2; font-size:16px;
+  }
+  .wrap{max-width:900px; margin:0 auto; padding:32px 20px 80px}
+  h1{color:var(--accent); font-size:28px; border-bottom:2px solid var(--line); padding-bottom:12px}
+  h2{color:var(--accent2); font-size:22px; margin-top:44px}
+  h3{color:var(--yellow); font-size:18px; margin-top:28px}
+  p{margin:12px 0}
+  code.inline{background:var(--panel2); color:var(--warn); padding:2px 6px; border-radius:4px;
+    font-family:Consolas,"Courier New",monospace; direction:ltr; display:inline-block; font-size:14px}
+  pre{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px;
+    overflow-x:auto; direction:ltr; text-align:left; font-family:Consolas,"Courier New",monospace;
+    font-size:13.5px; line-height:1.7}
+  .k{color:#569cd6}   /* keyword */
+  .f{color:#dcdcaa}   /* function */
+  .s{color:#ce9178}   /* string */
+  .n{color:#b5cea8}   /* number */
+  .c{color:#6a9955}   /* comment */
+  .t{color:#4ec9b0}   /* type/class */
+  .v{color:#9cdcfe}   /* variable */
+  .box{background:var(--panel); border:1px solid var(--line); border-right:4px solid var(--accent2);
+    border-radius:8px; padding:14px 18px; margin:20px 0}
+  .box.warn{border-right-color:var(--warn)}
+  .box.ok{border-right-color:var(--ok)}
+  table{width:100%; border-collapse:collapse; margin:18px 0; font-size:15px}
+  th,td{border:1px solid var(--line); padding:10px 12px; text-align:right}
+  th{background:var(--panel2); color:var(--accent)}
+  .ltr{direction:ltr; text-align:left}
+  .diagram{background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:24px 16px; margin:22px 0; direction:ltr; text-align:center}
+  .row{display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:10px}
+  .node{background:var(--panel2); border:1px solid var(--accent2); color:var(--fg);
+    border-radius:6px; padding:10px 14px; font-family:Consolas,monospace; font-size:13px; min-width:110px}
+  .node.store{border-color:var(--accent); color:var(--accent)}
+  .node.out{border-color:var(--yellow); color:var(--yellow)}
+  .arrow{color:var(--muted); font-size:20px}
+  .caption{color:var(--muted); font-size:13px; margin-top:14px; font-family:Consolas,monospace}
+  ul{padding-right:22px} li{margin:6px 0}
+  .lane{margin:14px 0}
+  .lane-title{color:var(--muted); font-family:Consolas,monospace; font-size:12px; margin-bottom:8px; letter-spacing:1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>پروژه ۱۶ — از لیست هاردکد تا یک RAG واقعی</h1>
+
+<p>
+در پروژه ۱۵ داکیومنت‌ها چهار تا رشته داخل کد بودند و وکتورها داخل یک لیست پایتون.
+این کار می‌کرد، ولی به هیچ‌کدام از مشکلات دنیای واقعی برخورد نکردی.
+این پروژه دقیقاً همان مشکلات را اضافه می‌کند: <b>فایل واقعی</b>، <b>chunking</b>، و <b>vector store</b>.
+</p>
+
+<h2>۱. مشکل اول: فایل‌ها بزرگ‌اند</h2>
+
+<p>
+فرض کن یک فایل ۲۰ صفحه‌ای داری. اگر کل فایل را یک وکتور کنی، سه چیز خراب می‌شود:
+</p>
+
+<ul>
+  <li><b>معنی رقیق می‌شود.</b> یک وکتور ۳۸۴ بعدی نمی‌تواند ۲۰ صفحه موضوع مختلف را همزمان نمایندگی کند. میانگین همه‌چیز می‌شود، یعنی هیچ‌چیز.</li>
+  <li><b>context window پر می‌شود.</b> برای جواب دادن به یک سوال کوچک، ۲۰ صفحه را به مدل می‌فرستی. هم گران است هم دقت پایین می‌آید.</li>
+  <li><b>نمی‌توانی cite کنی.</b> می‌گویی «جواب توی این فایل بود» — ولی کجای فایل؟</li>
+</ul>
+
+<p>راه‌حل: فایل را به تکه‌های کوچک‌تر بشکن. به هر تکه می‌گوییم <span class="inline">chunk</span>.</p>
+
+<h3>اندازه chunk یک trade-off است</h3>
+
+<table>
+  <tr><th>حالت</th><th>چه اتفاقی می‌افتد</th></tr>
+  <tr><td>chunk خیلی کوچک (مثلاً ۵۰ کاراکتر)</td><td>context کافی ندارد. «این کار ممنوع است» بدون اینکه معلوم باشد «این» چیست. retrieval هم پر از نویز می‌شود.</td></tr>
+  <tr><td>chunk خیلی بزرگ (مثلاً ۵۰۰۰ کاراکتر)</td><td>همان مشکل کل‌فایل، فقط کوچک‌تر. یک chunk چند موضوع دارد و وکتورش بی‌دقت می‌شود.</td></tr>
+  <tr><td>معمول در عمل</td><td>حدود ۳۰۰ تا ۱۰۰۰ کاراکتر. باید تست کنی، فرمول ندارد.</td></tr>
+</table>
+
+<h3>چرا overlap لازم است؟</h3>
+
+<p>
+اگر دقیقاً سر ۵۰۰ کاراکتر ببری، ممکن است وسط یک جمله یا وسط یک ایده بشکنی.
+جمله‌ی «دلیلش این است که rollback مایگریشن را برنمی‌گرداند» ممکن است نصفش در chunk اول و نصفش در chunk دوم بیفتد — و آن‌وقت هیچ‌کدام جواب کامل نیستند.
+</p>
+<p>
+<b>overlap</b> یعنی هر chunk چند کاراکتر آخر chunk قبلی را هم تکرار می‌کند. مثل یک بالشتک.
+معمولاً ۱۰٪ تا ۲۰٪ اندازه‌ی chunk.
+</p>
+
+<div class="diagram">
+  <div class="lane">
+    <div class="lane-title">CHUNKING WITH OVERLAP (chunk_size = 500, overlap = 100)</div>
+    <div class="row">
+      <div class="node">chars 0 → 500</div>
+      <div class="node">chars 400 → 900</div>
+      <div class="node">chars 800 → 1300</div>
+    </div>
+    <div class="caption">next_start = start + chunk_size - overlap</div>
+  </div>
+</div>
+
+<div class="box warn">
+  <b>تله:</b> اگر <span class="inline">overlap >= chunk_size</span> باشد، <span class="inline">next_start</span> جلو نمی‌رود و حلقه‌ات بی‌نهایت می‌شود. این را در کدت هندل کن.
+</div>
+
+<h2>۲. مشکل دوم: وکتورها باید جایی بمانند</h2>
+
+<p>
+در پروژه ۱۵ هر بار که برنامه را اجرا می‌کردی، همه‌ی داکیومنت‌ها دوباره embed می‌شدند.
+با ۴ داکیومنت اهمیتی ندارد. با ۱۰٬۰۰۰ فایل، هر اجرا چند دقیقه طول می‌کشد و (اگر API باشد) پول می‌دهی.
+</p>
+
+<p>
+پس pipeline به دو نیمه تقسیم می‌شود که <b>در دو زمان مختلف</b> اجرا می‌شوند:
+</p>
+
+<div class="diagram">
+  <div class="lane">
+    <div class="lane-title">OFFLINE — ingest.py (run when documents change)</div>
+    <div class="row">
+      <div class="node">docs/*.md</div><span class="arrow">→</span>
+      <div class="node">chunk</div><span class="arrow">→</span>
+      <div class="node">embed</div><span class="arrow">→</span>
+      <div class="node store">Vector Store<br>(on disk)</div>
+    </div>
+  </div>
+  <div class="lane">
+    <div class="lane-title">ONLINE — ask.py (run on every question)</div>
+    <div class="row">
+      <div class="node">question</div><span class="arrow">→</span>
+      <div class="node">embed</div><span class="arrow">→</span>
+      <div class="node store">Vector Store</div><span class="arrow">→</span>
+      <div class="node">top-k chunks</div><span class="arrow">→</span>
+      <div class="node">LLM</div><span class="arrow">→</span>
+      <div class="node out">answer + sources</div>
+    </div>
+  </div>
+  <div class="caption">the store is the only thing the two halves share</div>
+</div>
+
+<div class="box">
+  این همان شکل هر سیستم RAG در production است: یک <b>indexing job</b> آفلاین و یک <b>query path</b> آنلاین که فقط از طریق vector store با هم حرف می‌زنند.
+</div>
+
+<h2>۳. vector store دقیقاً چیست؟</h2>
+
+<p>
+یک دیتابیس که به‌جای «کجا فیلد X برابر Y است»، جواب می‌دهد به «کدام وکتورها به این وکتور نزدیک‌ترند».
+</p>
+
+<p>
+تو در پروژه ۱۵ این را دستی نوشتی: similarity را با همه‌ی داکیومنت‌ها حساب کردی، sort کردی، top_k را برداشتی.
+این روش اسمش <b>brute force</b> است و برای ۴ داکیومنت عالی است. برای یک میلیون وکتور کند است.
+</p>
+
+<p>
+vector store دو کار برایت می‌کند:
+</p>
+
+<ul>
+  <li><b>index</b> — ساختار داده‌ای مثل HNSW که به‌جای چک کردن همه، فقط بخش کوچکی از فضا را می‌گردد. جواب <i>تقریبی</i> است (ANN = Approximate Nearest Neighbor) ولی خیلی سریع‌تر.</li>
+  <li><b>persistence + metadata</b> — وکتور، متن اصلی، و متادیتا (source، chunk_index، تاریخ...) کنار هم ذخیره می‌شوند و بعد از restart سر جایشان هستند.</li>
+</ul>
+
+<h3>مقایسه ذهنی با چیزی که می‌شناسی</h3>
+
+<table>
+  <tr><th>SQL Server / EF Core</th><th>Vector Store</th></tr>
+  <tr><td>Table</td><td>Collection</td></tr>
+  <tr><td>Row</td><td>یک chunk: id + vector + document + metadata</td></tr>
+  <tr><td><span class="inline">WHERE name = 'x'</span> (exact match)</td><td><span class="inline">query(vector, n_results=4)</span> (nearest match)</td></tr>
+  <tr><td>B-tree index</td><td>HNSW index</td></tr>
+  <tr><td>connection string</td><td>مسیر پوشه‌ی persist</td></tr>
+</table>
+
+<h2>۴. Chroma در عمل</h2>
+
+<pre><span class="k">import</span> <span class="v">chromadb</span>
+
+<span class="c"># a client that writes to a folder on disk</span>
+<span class="v">client</span> = <span class="v">chromadb</span>.<span class="f">PersistentClient</span>(<span class="v">path</span>=<span class="s">"chroma_db"</span>)
+
+<span class="c"># a collection = one logical set of chunks</span>
+<span class="v">collection</span> = <span class="v">client</span>.<span class="f">get_or_create_collection</span>(
+    <span class="v">name</span>=<span class="s">"handbook"</span>,
+    <span class="v">configuration</span>={<span class="s">"hnsw"</span>: {<span class="s">"space"</span>: <span class="s">"cosine"</span>}},
+)
+
+<span class="c"># write: ids / embeddings / documents / metadatas are parallel lists</span>
+<span class="v">collection</span>.<span class="f">add</span>(
+    <span class="v">ids</span>=[<span class="s">"deployment.md#0"</span>],
+    <span class="v">embeddings</span>=[[<span class="n">0.12</span>, <span class="n">0.03</span>, <span class="c">...</span>]],
+    <span class="v">documents</span>=[<span class="s">"Deployments to production are allowed..."</span>],
+    <span class="v">metadatas</span>=[{<span class="s">"source"</span>: <span class="s">"deployment.md"</span>, <span class="s">"chunk_index"</span>: <span class="n">0</span>}],
+)
+
+<span class="c"># read: nearest neighbours of a query vector</span>
+<span class="v">res</span> = <span class="v">collection</span>.<span class="f">query</span>(<span class="v">query_embeddings</span>=[<span class="v">q_vec</span>], <span class="v">n_results</span>=<span class="n">4</span>)
+</pre>
+
+<div class="box warn">
+  <b>مهم:</b> نتیجه‌ی <span class="inline">query</span> یک dict از <b>list of lists</b> است، چون می‌توانی چند سوال را باهم بپرسی.
+  تو یک سوال پرسیدی، پس همه‌چیز در ایندکس <span class="inline">[0]</span> است:
+  <span class="inline">res["documents"][0]</span>
+</div>
+
+<div class="box warn">
+  <b>distance ≠ similarity.</b> Chroma با فضای cosine مقدار <b>فاصله</b> برمی‌گرداند: کوچک‌تر = بهتر.
+  در پروژه ۱۵ برعکس بود (بزرگ‌تر = بهتر). رابطه: <span class="inline">similarity = 1 - distance</span>.
+  اگر این را جابه‌جا بگیری، فیلترت دقیقاً برعکس عمل می‌کند.
+</div>
+
+<h3>چرا cosine و نه پیش‌فرض؟</h3>
+<p>
+پیش‌فرض Chroma فاصله‌ی L2 (اقلیدسی) است. مدل‌های embedding مثل all-MiniLM برای مقایسه‌ی cosine آموزش دیده‌اند —
+یعنی <b>جهت</b> وکتور معنی دارد، نه طولش. باید فضا را به cosine ست کنی تا با مدل هماهنگ باشد.
+</p>
+
+<h2>۵. سوال id ها</h2>
+
+<p>
+هر chunk باید یک <span class="inline">id</span> یکتا داشته باشد. این انتخاب مستقیماً تعیین می‌کند اجرای دوم <span class="inline">ingest.py</span> چه می‌کند:
+</p>
+
+<table>
+  <tr><th>روش</th><th>اجرای دوم</th></tr>
+  <tr><td>id تصادفی (uuid)</td><td>همه‌چیز دوباره اضافه می‌شود → داده دوبرابر، retrieval پر از تکرار</td></tr>
+  <tr><td>id پایدار مثل <span class="inline">"deployment.md#3"</span> + <span class="inline">upsert</span></td><td>همان chunk جایگزین می‌شود → تمیز، ولی chunk های حذف‌شده باقی می‌مانند</td></tr>
+  <tr><td>delete collection سپس rebuild</td><td>همیشه درست، ساده، ولی همه‌چیز دوباره embed می‌شود</td></tr>
+</table>
+
+<p>در این پروژه هر کدام را می‌خواهی انتخاب کن — ولی در کامنت بنویس چرا.</p>
+
+<h2>واژه‌نامه</h2>
+
+<table>
+  <tr><th>اصطلاح</th><th>یعنی</th></tr>
+  <tr><td>chunk</td><td>یک تکه از یک داکیومنت که مستقلاً embed و ذخیره می‌شود</td></tr>
+  <tr><td>overlap</td><td>کاراکترهای مشترک بین دو chunk پشت‌سرهم</td></tr>
+  <tr><td>collection</td><td>معادل «جدول» در vector store</td></tr>
+  <tr><td>metadata</td><td>فیلدهای معمولی کنار هر chunk (source، chunk_index) — برای فیلتر و citation</td></tr>
+  <tr><td>ANN</td><td>Approximate Nearest Neighbor — جستجوی تقریبی ولی سریع</td></tr>
+  <tr><td>HNSW</td><td>الگوریتم index که Chroma استفاده می‌کند</td></tr>
+  <tr><td>ingest / indexing</td><td>مرحله‌ی آفلاین: خواندن، chunk، embed، ذخیره</td></tr>
+  <tr><td>top-k</td><td>تعداد نزدیک‌ترین chunk هایی که برمی‌گردانی</td></tr>
+</table>
+
+<div class="box ok">
+  <b>قدم بعدی:</b> <span class="inline">README.md</span> را بخوان، به ۵ سوال آخرش جواب بده (فقط برای خودت)، بعد <span class="inline">chunk_text</span> را بنویس.
+</div>
+
+</div>
+</body>
+</html>
