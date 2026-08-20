@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project 17 — Hybrid Search &amp; Reranking · مفاهیم</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+<style>
+:root{
+  --bg:#15171c; --panel:#1c1f26; --panel2:#22262f; --line:#2e3440;
+  --text:#dfe4ec; --muted:#9aa4b8; --accent:#7cc4ff; --accent2:#c39bff;
+  --green:#78d49a; --amber:#f0c674; --red:#f08a8a;
+  --code-bg:#1e1e1e;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:'Vazirmatn',Tahoma,'Segoe UI',sans-serif;
+  font-size:16px; line-height:2;
+}
+.wrap{max-width:980px;margin:0 auto;padding:32px 20px 80px}
+header.hero{
+  border:1px solid var(--line); border-radius:16px; padding:28px;
+  background:linear-gradient(135deg,#1c2230,#1a1d24); margin-bottom:34px;
+}
+header.hero h1{margin:0 0 6px; font-size:28px}
+header.hero .sub{color:var(--muted);font-size:15px}
+header.hero .tag{
+  display:inline-block;background:#243044;color:var(--accent);
+  border:1px solid #34496b;border-radius:999px;padding:2px 12px;font-size:13px;margin-top:12px
+}
+h2{
+  font-size:22px;margin:44px 0 14px;padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+}
+h2 .num{color:var(--accent2);font-family:ui-monospace,monospace;margin-left:8px}
+h3{font-size:17px;margin:26px 0 8px;color:var(--accent)}
+p{margin:10px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0}
+.card.warn{border-color:#5a4a2a;background:#241f16}
+.card.good{border-color:#2f5340;background:#16211b}
+.card.bad{border-color:#5a3030;background:#241818}
+.card h4{margin:0 0 8px;font-size:16px}
+kbd,.kw{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  background:#2a3446;color:#8fd0ff;border:1px solid #3a4c68;
+  border-radius:5px;padding:1px 7px;font-size:14px;direction:ltr;display:inline-block;
+}
+.kw.p{background:#33294a;color:#c9a9ff;border-color:#4b3b6b}
+.kw.g{background:#223a2b;color:#8fe0ac;border-color:#33553f}
+.kw.a{background:#3d3320;color:#f5cd7c;border-color:#5d4c2c}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:right}
+th{background:var(--panel2);color:var(--accent);font-weight:600}
+td.ltr,th.ltr{direction:ltr;text-align:left;font-family:ui-monospace,monospace}
+tr.hit td{background:#16211b}
+/* ---- code ---- */
+pre{
+  direction:ltr;text-align:left;background:var(--code-bg);border:1px solid var(--line);
+  border-radius:10px;padding:16px 18px;overflow-x:auto;
+  font-family:ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;
+  font-size:14px;line-height:1.75;margin:14px 0;
+}
+.c-com{color:#6a9955}.c-key{color:#569cd6}.c-fn{color:#dcdcaa}.c-str{color:#ce9178}
+.c-num{color:#b5cea8}.c-var{color:#9cdcfe}.c-cls{color:#4ec9b0}.c-op{color:#d4d4d4}
+.label{font-size:13px;color:var(--muted);margin-bottom:-6px;direction:ltr;text-align:left}
+/* ---- diagrams ---- */
+.diagram{
+  direction:ltr;text-align:left;background:var(--panel2);border:1px solid var(--line);
+  border-radius:12px;padding:22px 18px;margin:18px 0;overflow-x:auto;
+}
+.flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+.node{
+  background:#233047;border:1px solid #38507a;color:#cfe4ff;border-radius:9px;
+  padding:9px 14px;font-size:14px;font-family:ui-monospace,monospace;white-space:nowrap;
+}
+.node.alt{background:#332a49;border-color:#4d3f70;color:#dcc9ff}
+.node.ok{background:#1e3a2a;border-color:#33613f;color:#a8e8bf}
+.node.err{background:#3a2020;border-color:#663333;color:#f2a8a8}
+.node.dim{background:#242830;border-color:#39404d;color:var(--muted)}
+.arrow{color:var(--muted);font-size:20px;font-family:monospace}
+.col{display:flex;flex-direction:column;gap:8px;align-items:center}
+.cap{
+  text-align:center;color:var(--muted);font-size:13px;margin-top:12px;direction:ltr;
+}
+.bar{height:14px;border-radius:4px;background:#3a4c68;display:inline-block;vertical-align:middle}
+.bar.b{background:#4a7fb8}.bar.c{background:#7a5fb0}
+.scale{direction:ltr;text-align:left;font-family:ui-monospace,monospace;font-size:13px;color:var(--muted)}
+ul{padding-right:22px;margin:10px 0}
+li{margin:6px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:720px){.two{grid-template-columns:1fr}}
+.pill{display:inline-block;font-size:13px;padding:2px 10px;border-radius:999px;margin-left:6px}
+.pill.dense{background:#233047;color:#9dc8ff;border:1px solid #38507a}
+.pill.sparse{background:#33294a;color:#c9a9ff;border:1px solid #4b3b6b}
+footer{margin-top:60px;color:var(--muted);font-size:14px;border-top:1px solid var(--line);padding-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>Project 17 — Hybrid Search</h1>
+  <div class="sub">مفاهیم لازم قبل از کد زدن · Dense + BM25 + Fusion (و یک نگاه به Reranking)</div>
+  <span class="tag">RAG · Retrieval Quality</span>
+</header>
+
+<!-- ================= 1 ================= -->
+<h2><span class="num">01</span> مسئله‌ای که باید حل شود</h2>
+
+<p>پایپ‌لاین پروژهٔ ۱۶ فقط <span class="kw">dense search</span> دارد: سوال به وکتور تبدیل می‌شود و نزدیک‌ترین chunkها برمی‌گردند. این روش روی یک تست شکست خورد:</p>
+
+<div class="card bad">
+  <h4>Test case 8</h4>
+  <p><b>سوال:</b> <span class="kw">"How much vacation do I get after a production incident?"</span></p>
+  <p><b>متن سند:</b> <span class="kw">"additional time off in lieu if they are paged outside working hours"</span></p>
+  <p>هر دو یک معنی دارند، ولی <b>هیچ کلمهٔ مشترکی</b> ندارند. chunk درست حتی در <span class="kw">top_k = 6</span> هم برنگشت.</p>
+</div>
+
+<p>اسم این مشکل <span class="kw">vocabulary mismatch</span> است. با تغییر chunk size، تغییر prompt یا بالا بردن top_k حل نمی‌شود — چون اصلاً یک مشکلِ <b>retrieval</b> است، نه یک مشکلِ generation.</p>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="node">question</div><span class="arrow">→</span>
+    <div class="node alt">embedding</div><span class="arrow">→</span>
+    <div class="node">nearest vectors</div><span class="arrow">→</span>
+    <div class="node err">wrong chunks</div><span class="arrow">→</span>
+    <div class="node err">"I don't know"</div>
+  </div>
+  <div class="cap">the failure happens at step 3, long before the LLM sees anything</div>
+</div>
+
+<!-- ================= 2 ================= -->
+<h2><span class="num">02</span> دو خانوادهٔ جستجو</h2>
+
+<p>راه‌حل این است که در کنار جستجوی معنایی، یک جستجوی <b>کلمه‌محور</b> هم اجرا کنیم.</p>
+
+<table>
+<tr><th>&nbsp;</th><th>Dense <span class="pill dense">embedding</span></th><th>Sparse <span class="pill sparse">BM25</span></th></tr>
+<tr><td><b>پایه</b></td><td>معنی / نزدیکی بردارها</td><td>تطابق دقیق کلمه</td></tr>
+<tr><td><b>نمایش داده</b></td><td>۳۸۴ عدد ممیز شناور (چگال)</td><td>شمارش کلمات (اکثراً صفر → «تُنُک»)</td></tr>
+<tr><td><b>قوی در</b></td><td>مترادف، بازنویسی جمله</td><td>نام محصول، کد خطا، شمارهٔ نسخه، اصطلاح نادر</td></tr>
+<tr><td><b>ضعیف در</b></td><td>کلمهٔ نادر و دقیق</td><td>مترادف، جملهٔ بازنویسی‌شده</td></tr>
+<tr><td><b>خروجی</b></td><td><span class="kw">distance</span> · کمتر = بهتر</td><td><span class="kw">score</span> · بیشتر = بهتر</td></tr>
+</table>
+
+<div class="card good">
+  <h4>تعریف Hybrid Search</h4>
+  هر دو جستجو را <b>جداگانه</b> اجرا کن، بعد دو لیست نتیجه را در هم <b>ادغام</b> کن. همین. سختیِ کار در قسمت ادغام است، نه در اجرا.
+</div>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="node">question</div>
+    <span class="arrow">→</span>
+    <div class="col">
+      <div class="node">dense_search → top 10</div>
+      <div class="node alt">bm25_search → top 10</div>
+    </div>
+    <span class="arrow">→</span>
+    <div class="node ok">fusion</div>
+    <span class="arrow">→</span>
+    <div class="node ok">top 4 → LLM</div>
+  </div>
+  <div class="cap">two retrievers, one merge step</div>
+</div>
+
+<!-- ================= 3 ================= -->
+<h2><span class="num">03</span> BM25 در یک نگاه</h2>
+
+<p><span class="kw">BM25</span> نسخهٔ پیشرفتهٔ <span class="kw">TF-IDF</span> است. برای هر chunk یک عدد می‌دهد که از سه عامل ساخته می‌شود:</p>
+
+<table>
+<tr><th>عامل</th><th>اسم</th><th>اثر روی امتیاز</th></tr>
+<tr><td>کلمه در این chunk چند بار آمده؟</td><td class="ltr">TF · term frequency</td><td>بیشتر → امتیاز بالاتر <span class="bar" style="width:70px"></span></td></tr>
+<tr><td>این کلمه در چند chunk دیگر هست؟</td><td class="ltr">IDF · inverse document frequency</td><td>کمیاب‌تر → امتیاز خیلی بالاتر <span class="bar b" style="width:100px"></span></td></tr>
+<tr><td>این chunk چقدر بلند است؟</td><td class="ltr">length normalization</td><td>بلندتر → امتیاز پایین‌تر <span class="bar c" style="width:30px"></span></td></tr>
+</table>
+
+<div class="card warn">
+  <h4>مهم‌ترین نکتهٔ IDF</h4>
+  کلمه‌ای مثل <span class="kw">"team"</span> که در همهٔ سندها هست، وزنش تقریباً صفر می‌شود. کلمه‌ای مثل <span class="kw">"incident"</span> که فقط در یک chunk هست، وزن بسیار بالایی می‌گیرد. دقیقاً همان چیزی که تست ۸ لازم دارد.
+</div>
+
+<p class="label">the only new library surface in this project</p>
+<pre><span class="c-key">from</span> rank_bm25 <span class="c-key">import</span> <span class="c-cls">BM25Okapi</span>
+
+<span class="c-com"># build ONCE at startup, never inside the search function</span>
+<span class="c-var">bm25</span> <span class="c-op">=</span> <span class="c-cls">BM25Okapi</span>([<span class="c-fn">tokenize</span>(t) <span class="c-key">for</span> t <span class="c-key">in</span> <span class="c-var">chunk_texts</span>])
+
+<span class="c-com"># per query -> one float for EVERY chunk, in corpus order</span>
+<span class="c-var">scores</span> <span class="c-op">=</span> <span class="c-var">bm25</span>.<span class="c-fn">get_scores</span>(<span class="c-fn">tokenize</span>(<span class="c-var">question</span>))
+<span class="c-com"># NOT sorted · NOT cut to k · NOT normalized  -> that part is your job</span></pre>
+
+<div class="card">
+  <h4>tokenize باید یکی باشد</h4>
+  همان تابعی که corpus را توکنایز می‌کند باید سوال را هم توکنایز کند. اگر یکی lowercase باشد و دیگری نه، هیچ کلمه‌ای match نمی‌شود و هیچ خطایی هم نمی‌گیری.
+</div>
+
+<!-- ================= 4 ================= -->
+<h2><span class="num">04</span> مشکل اصلی: دو مقیاس متفاوت</h2>
+
+<p>حالا دو لیست داریم. چرا نمی‌شود امتیازها را جمع کرد؟</p>
+
+<div class="diagram">
+  <div class="scale">
+    <div style="margin-bottom:14px">
+      <b style="color:#9dc8ff">Chroma cosine distance</b> &nbsp; lower is better<br>
+      0.0 |<span class="bar b" style="width:180px"></span>| 2.0 &nbsp;&nbsp; bounded, inverted
+    </div>
+    <div>
+      <b style="color:#c9a9ff">BM25 score</b> &nbsp; higher is better<br>
+      0.0 |<span class="bar c" style="width:180px"></span>| ??? &nbsp;&nbsp; unbounded, query-dependent
+    </div>
+  </div>
+  <div class="cap">different direction · different range · different meaning</div>
+</div>
+
+<ul>
+  <li>یکی <b>معکوس</b> است (کمتر بهتر)، دیگری نه → قبل از هر کاری باید یکی‌شان برعکس شود.</li>
+  <li>BM25 <b>سقف ندارد</b>. امتیاز ۸ برای یک سوال «عالی» است و برای سوال دیگر «معمولی» — بین دو کوئری قابل مقایسه نیست.</li>
+  <li>یک chunk ممکن است فقط در <b>یکی</b> از دو لیست باشد. مقدارش در لیست دیگر چیست؟ این یک تصمیم طراحی است، نه یک حقیقت.</li>
+</ul>
+
+<!-- ================= 5 ================= -->
+<h2><span class="num">05</span> راه اول — Normalize + Weighted Sum</h2>
+
+<p>هر دو لیست را به بازهٔ ۰ تا ۱ ببر، بعد با وزن جمع کن.</p>
+
+<pre><span class="c-com"># pseudo-code - not the implementation</span>
+<span class="c-key">for</span> each list:
+    <span class="c-var">norm</span> <span class="c-op">=</span> (<span class="c-var">score</span> <span class="c-op">-</span> <span class="c-fn">min</span>) <span class="c-op">/</span> (<span class="c-fn">max</span> <span class="c-op">-</span> <span class="c-fn">min</span>)      <span class="c-com"># min-max normalization</span>
+
+<span class="c-var">fused</span> <span class="c-op">=</span> <span class="c-var">alpha</span> <span class="c-op">*</span> <span class="c-var">dense_norm</span> <span class="c-op">+</span> (<span class="c-num">1</span> <span class="c-op">-</span> <span class="c-var">alpha</span>) <span class="c-op">*</span> <span class="c-var">sparse_norm</span></pre>
+
+<div class="card warn">
+  <h4>سه تلهٔ این روش</h4>
+  <ul>
+    <li>اگر همهٔ امتیازها برابر باشند → <span class="kw">max - min = 0</span> → تقسیم بر صفر.</li>
+    <li>normalize روی <b>همان کوئری</b> انجام می‌شود، پس بهترین نتیجه همیشه ۱ می‌گیرد — حتی اگر ذاتاً بد باشد.</li>
+    <li><span class="kw">alpha</span> یک عدد دستی است. بدون مجموعهٔ تست برچسب‌خورده، تنظیمش حدس زدن است.</li>
+  </ul>
+</div>
+
+<div class="card good">
+  <h4>تست سلامت (sanity check)</h4>
+  <span class="kw">alpha = 1.0</span> باید دقیقاً همان <span class="kw">dense_only</span> را بدهد و <span class="kw">alpha = 0.0</span> دقیقاً <span class="kw">bm25_only</span> را. اگر نداد، مشکل از normalize یا از مقدار پیش‌فرضِ chunkهای تک‌لیستی است.
+</div>
+
+<!-- ================= 6 ================= -->
+<h2><span class="num">06</span> راه دوم — RRF (Reciprocal Rank Fusion)</h2>
+
+<p>ایدهٔ اصلی: <b>امتیازها را کاملاً دور بریز، فقط رتبه را نگه دار.</b> وقتی امتیاز حذف شود، مسئلهٔ مقیاس هم حذف می‌شود.</p>
+
+<pre><span class="c-com"># rank is 1-based position inside each list</span>
+<span class="c-fn">score</span>(chunk) <span class="c-op">=</span> <span class="c-op">Σ</span>  <span class="c-num">1</span> <span class="c-op">/</span> (<span class="c-var">k</span> <span class="c-op">+</span> <span class="c-var">rank</span>)        <span class="c-com"># k = 60 by convention</span></pre>
+
+<h3>مثال عددی</h3>
+
+<div class="two">
+<table>
+<tr><th class="ltr">Dense</th><th>rank</th></tr>
+<tr><td class="ltr">A</td><td>1</td></tr>
+<tr><td class="ltr">B</td><td>2</td></tr>
+<tr><td class="ltr">C</td><td>3</td></tr>
+<tr><td class="ltr">D</td><td>4</td></tr>
+</table>
+<table>
+<tr><th class="ltr">BM25</th><th>rank</th></tr>
+<tr><td class="ltr">E</td><td>1</td></tr>
+<tr><td class="ltr">C</td><td>2</td></tr>
+<tr><td class="ltr">A</td><td>3</td></tr>
+<tr><td class="ltr">B</td><td>4</td></tr>
+</table>
+</div>
+
+<table>
+<tr><th class="ltr">chunk</th><th class="ltr">calculation (k = 60)</th><th class="ltr">RRF score</th><th>نتیجه</th></tr>
+<tr class="hit"><td class="ltr">A</td><td class="ltr">1/61 + 1/63</td><td class="ltr">0.03226</td><td>۱ — در هر دو لیست، بالا</td></tr>
+<tr class="hit"><td class="ltr">C</td><td class="ltr">1/63 + 1/62</td><td class="ltr">0.03200</td><td>۲ — در هر دو لیست، وسط</td></tr>
+<tr class="hit"><td class="ltr">B</td><td class="ltr">1/62 + 1/64</td><td class="ltr">0.03176</td><td>۳ — در هر دو لیست، پایین</td></tr>
+<tr><td class="ltr">E</td><td class="ltr">1/61</td><td class="ltr">0.01639</td><td>۴ — رتبهٔ ۱ ولی فقط یک لیست</td></tr>
+<tr><td class="ltr">D</td><td class="ltr">1/64</td><td class="ltr">0.01563</td><td>۵</td></tr>
+</table>
+
+<div class="card good">
+  <h4>پیام این جدول</h4>
+  <span class="kw">E</span> رتبهٔ ۱ در BM25 بود، ولی از <span class="kw">B</span> که در هر دو لیست رتبهٔ پایین داشت <b>عقب افتاد</b>. RRF ذاتاً به <span class="kw">agreement</span> بین دو retriever پاداش می‌دهد. این همان رفتاری است که در hybrid search می‌خواهیم.
+</div>
+
+<h3>نقش <span class="kw">k</span></h3>
+<ul>
+  <li><b>k بزرگ (۶۰)</b> → فاصلهٔ بین رتبه‌ها کم می‌شود → «در هر دو لیست بودن» مهم‌تر از «اول بودن» است.</li>
+  <li><b>k کوچک (۱)</b> → رتبهٔ ۱ خیلی سنگین می‌شود → عملاً برندهٔ یک لیست همه چیز را می‌برد.</li>
+</ul>
+
+<!-- ================= 7 ================= -->
+<h2><span class="num">07</span> نگاهی جلوتر — Reranking (پروژهٔ ۱۸)</h2>
+
+<p>مدلی که تا الان استفاده کرده‌ای یک <span class="kw">bi-encoder</span> است: سوال و chunk را <b>جدا جدا</b> به وکتور تبدیل می‌کند و بعد مقایسه می‌کند. مدل هرگز آن دو را کنار هم ندیده.</p>
+
+<div class="diagram">
+  <div class="flow" style="margin-bottom:20px">
+    <div class="col">
+      <div class="node">question</div>
+      <div class="node">chunk</div>
+    </div>
+    <span class="arrow">→</span>
+    <div class="col">
+      <div class="node alt">encode</div>
+      <div class="node alt">encode (precomputed)</div>
+    </div>
+    <span class="arrow">→</span>
+    <div class="node">cosine similarity</div>
+    <div class="node dim">bi-encoder · fast</div>
+  </div>
+  <div class="flow">
+    <div class="node">question + chunk together</div>
+    <span class="arrow">→</span>
+    <div class="node alt">one model pass</div>
+    <span class="arrow">→</span>
+    <div class="node ok">relevance score</div>
+    <div class="node dim">cross-encoder · accurate · slow</div>
+  </div>
+  <div class="cap">nothing can be precomputed for a cross-encoder — one model run per (question, chunk) pair</div>
+</div>
+
+<p>چون cross-encoder برای هر جفت باید اجرا شود، روی ۱۰۰۰ chunk غیرممکن است. پس معماری <b>دو مرحله‌ای</b> می‌شود:</p>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="node">question</div><span class="arrow">→</span>
+    <div class="node">hybrid retrieve · top 20</div><span class="arrow">→</span>
+    <div class="node alt">cross-encoder rerank</div><span class="arrow">→</span>
+    <div class="node ok">top 4</div><span class="arrow">→</span>
+    <div class="node ok">LLM</div>
+  </div>
+  <div class="cap">stage 1 = RECALL &nbsp;·&nbsp; stage 2 = PRECISION</div>
+</div>
+
+<table>
+<tr><th>مرحله</th><th>معیار</th><th>یعنی چه</th></tr>
+<tr><td class="ltr">retrieve (top 20)</td><td class="ltr">recall</td><td>جواب درست را از قلم ننداز — ترتیبش مهم نیست</td></tr>
+<tr><td class="ltr">rerank (top 4)</td><td class="ltr">precision</td><td>بهترین‌ها را بالا بیاور — ترتیب همه‌چیز است</td></tr>
+</table>
+
+<div class="card bad">
+  <h4>قانونی که همه چیز را روشن می‌کند</h4>
+  اگر chunk درست اصلاً در آن ۲۰ تا نباشد، reranker <b>هیچ کاری</b> نمی‌تواند بکند. برای همین ترتیب پروژه‌ها این است: اول hybrid (بهبود recall)، بعد rerank (بهبود precision).
+</div>
+
+<!-- ================= 8 ================= -->
+<h2><span class="num">08</span> تشخیص نهایی روی تست ۸</h2>
+
+<p>بعد از اجرای hybrid، دو حالت ممکن است — و هرکدام پروژهٔ بعدی را تعیین می‌کند:</p>
+
+<div class="two">
+  <div class="card good">
+    <h4>chunk درست در لیست هست ولی رتبه‌اش پایین‌تر از ۴ است</h4>
+    یک مشکل <span class="kw">ranking</span> است. دقیقاً همان چیزی که <span class="kw">reranker</span> حل می‌کند. → پروژهٔ ۱۸
+  </div>
+  <div class="card bad">
+    <h4>chunk درست در هیچ‌کدام از دو لیست نیست</h4>
+    یک مشکل <span class="kw">recall</span> است. reranker بی‌فایده است؛ باید سراغ <span class="kw">query rewriting</span> یا chunking بهتر بروی.
+  </div>
+</div>
+
+<!-- ================= 9 ================= -->
+<h2><span class="num">09</span> واژه‌نامه — کلمات کلیدی</h2>
+
+<table>
+<tr><th class="ltr">Keyword</th><th>معنی کوتاه</th></tr>
+<tr><td class="ltr">dense retrieval</td><td>جستجو با بردار معنایی — چیزی که تا الان داشتی</td></tr>
+<tr><td class="ltr">sparse retrieval</td><td>جستجوی کلمه‌محور — BM25</td></tr>
+<tr><td class="ltr">BM25</td><td>الگوریتم امتیازدهی کلمه‌محور: TF + IDF + length norm</td></tr>
+<tr><td class="ltr">TF / IDF</td><td>تکرار کلمه در سند / کمیاب بودن کلمه در کل مجموعه</td></tr>
+<tr><td class="ltr">hybrid search</td><td>اجرای dense و sparse با هم و ادغام نتایج</td></tr>
+<tr><td class="ltr">fusion</td><td>مرحلهٔ ادغام دو لیست رتبه‌بندی‌شده</td></tr>
+<tr><td class="ltr">min-max normalization</td><td>بردن امتیازها به بازهٔ ۰ تا ۱ برای قابل جمع شدن</td></tr>
+<tr><td class="ltr">RRF</td><td>ادغام بر پایهٔ رتبه: <span class="kw">Σ 1/(k+rank)</span></td></tr>
+<tr><td class="ltr">bi-encoder</td><td>سوال و متن جداگانه encode می‌شوند — سریع</td></tr>
+<tr><td class="ltr">cross-encoder</td><td>سوال و متن با هم وارد مدل می‌شوند — دقیق، کند</td></tr>
+<tr><td class="ltr">reranking</td><td>مرتب‌سازی دوبارهٔ نتایج بازیابی‌شده با مدل دقیق‌تر</td></tr>
+<tr><td class="ltr">recall</td><td>آیا جواب درست اصلاً بازیابی شد؟</td></tr>
+<tr><td class="ltr">precision</td><td>آیا جواب درست بالای لیست آمد؟</td></tr>
+<tr><td class="ltr">vocabulary mismatch</td><td>هم‌معنی بودن بدون کلمهٔ مشترک — علت شکست تست ۸</td></tr>
+<tr><td class="ltr">query rewriting</td><td>بازنویسی سوال با LLM به واژگان خود سندها</td></tr>
+</table>
+
+<div class="card">
+  <h4>جملهٔ مصاحبه‌ای</h4>
+  <p>«برای vocabulary mismatch از hybrid search استفاده می‌کنم: BM25 در کنار dense retrieval، و ادغام با RRF چون امتیازهای دو سیستم قابل جمع نیستند. مرحلهٔ retrieve را بر اساس recall می‌سنجم و مرحلهٔ rerank را بر اساس precision.»</p>
+</div>
+
+<footer>
+  Project 17 · مکمل <span class="kw">README.md</span> و <span class="kw">inputs.json</span> — این صفحه فقط مفاهیم است، مراحل پیاده‌سازی در README.
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project 17 — Hybrid Search &amp; Reranking · Concepts</title>
+<style>
+:root{
+  --bg:#15171c; --panel:#1c1f26; --panel2:#22262f; --line:#2e3440;
+  --text:#dfe4ec; --muted:#9aa4b8; --accent:#7cc4ff; --accent2:#c39bff;
+  --code-bg:#1e1e1e;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  font-size:16px; line-height:1.8;
+}
+.wrap{max-width:980px;margin:0 auto;padding:32px 20px 80px}
+header.hero{
+  border:1px solid var(--line); border-radius:16px; padding:28px;
+  background:linear-gradient(135deg,#1c2230,#1a1d24); margin-bottom:34px;
+}
+header.hero h1{margin:0 0 6px; font-size:28px}
+header.hero .sub{color:var(--muted);font-size:15px}
+header.hero .tag{
+  display:inline-block;background:#243044;color:var(--accent);
+  border:1px solid #34496b;border-radius:999px;padding:2px 12px;font-size:13px;margin-top:12px
+}
+h2{font-size:22px;margin:44px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+h2 .num{color:var(--accent2);font-family:ui-monospace,monospace;margin-right:8px}
+h3{font-size:17px;margin:26px 0 8px;color:var(--accent)}
+p{margin:10px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0}
+.card.warn{border-color:#5a4a2a;background:#241f16}
+.card.good{border-color:#2f5340;background:#16211b}
+.card.bad{border-color:#5a3030;background:#241818}
+.card h4{margin:0 0 8px;font-size:16px}
+kbd,.kw{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  background:#2a3446;color:#8fd0ff;border:1px solid #3a4c68;
+  border-radius:5px;padding:1px 7px;font-size:14px;display:inline-block;
+}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}
+th{background:var(--panel2);color:var(--accent);font-weight:600}
+td.mono,th.mono{font-family:ui-monospace,monospace}
+tr.hit td{background:#16211b}
+pre{
+  background:var(--code-bg);border:1px solid var(--line);
+  border-radius:10px;padding:16px 18px;overflow-x:auto;
+  font-family:ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;
+  font-size:14px;line-height:1.75;margin:14px 0;
+}
+.c-com{color:#6a9955}.c-key{color:#569cd6}.c-fn{color:#dcdcaa}.c-str{color:#ce9178}
+.c-num{color:#b5cea8}.c-var{color:#9cdcfe}.c-cls{color:#4ec9b0}.c-op{color:#d4d4d4}
+.label{font-size:13px;color:var(--muted);margin-bottom:-6px}
+.diagram{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:22px 18px;margin:18px 0;overflow-x:auto}
+.flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+.node{background:#233047;border:1px solid #38507a;color:#cfe4ff;border-radius:9px;padding:9px 14px;font-size:14px;font-family:ui-monospace,monospace;white-space:nowrap}
+.node.alt{background:#332a49;border-color:#4d3f70;color:#dcc9ff}
+.node.ok{background:#1e3a2a;border-color:#33613f;color:#a8e8bf}
+.node.err{background:#3a2020;border-color:#663333;color:#f2a8a8}
+.node.dim{background:#242830;border-color:#39404d;color:var(--muted)}
+.arrow{color:var(--muted);font-size:20px;font-family:monospace}
+.col{display:flex;flex-direction:column;gap:8px;align-items:center}
+.cap{text-align:center;color:var(--muted);font-size:13px;margin-top:12px}
+.bar{height:14px;border-radius:4px;background:#3a4c68;display:inline-block;vertical-align:middle}
+.bar.b{background:#4a7fb8}.bar.c{background:#7a5fb0}
+.scale{font-family:ui-monospace,monospace;font-size:13px;color:var(--muted)}
+ul{padding-left:22px;margin:10px 0}
+li{margin:6px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:720px){.two{grid-template-columns:1fr}}
+.pill{display:inline-block;font-size:13px;padding:2px 10px;border-radius:999px;margin-left:6px}
+.pill.dense{background:#233047;color:#9dc8ff;border:1px solid #38507a}
+.pill.sparse{background:#33294a;color:#c9a9ff;border:1px solid #4b3b6b}
+footer{margin-top:60px;color:var(--muted);font-size:14px;border-top:1px solid var(--line);padding-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>Project 17 — Hybrid Search</h1>
+  <div class="sub">Concepts to know before writing code · Dense + BM25 + Fusion (with a look ahead at Reranking)</div>
+  <span class="tag">RAG · Retrieval Quality</span>
+</header>
+
+<!-- 1 -->
+<h2><span class="num">01</span> The problem to solve</h2>
+
+<p>The Project 16 pipeline is 100% <span class="kw">dense search</span>: the question becomes a vector, and the nearest chunks come back. That failed on one test:</p>
+
+<div class="card bad">
+  <h4>Test case 8</h4>
+  <p><b>Question:</b> <span class="kw">"How much vacation do I get after a production incident?"</span></p>
+  <p><b>Document text:</b> <span class="kw">"additional time off in lieu if they are paged outside working hours"</span></p>
+  <p>Same meaning, <b>zero shared vocabulary</b>. The correct chunk did not come back even at <span class="kw">top_k = 6</span>.</p>
+</div>
+
+<p>This is called <span class="kw">vocabulary mismatch</span>. Chunk size, prompt wording and a bigger top_k do not fix it — it is a <b>retrieval</b> problem, not a generation problem.</p>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="node">question</div><span class="arrow">→</span>
+    <div class="node alt">embedding</div><span class="arrow">→</span>
+    <div class="node">nearest vectors</div><span class="arrow">→</span>
+    <div class="node err">wrong chunks</div><span class="arrow">→</span>
+    <div class="node err">"I don't know"</div>
+  </div>
+  <div class="cap">the failure happens at step 3, long before the LLM sees anything</div>
+</div>
+
+<!-- 2 -->
+<h2><span class="num">02</span> Two families of search</h2>
+
+<p>The fix is to run a <b>word-based</b> search next to the semantic one.</p>
+
+<table>
+<tr><th>&nbsp;</th><th>Dense <span class="pill dense">embedding</span></th><th>Sparse <span class="pill sparse">BM25</span></th></tr>
+<tr><td><b>Based on</b></td><td>meaning / vector proximity</td><td>exact word match</td></tr>
+<tr><td><b>Representation</b></td><td>384 floats (dense)</td><td>word counts, mostly zero (sparse)</td></tr>
+<tr><td><b>Strong at</b></td><td>synonyms, paraphrases</td><td>product names, error codes, version numbers, rare terms</td></tr>
+<tr><td><b>Weak at</b></td><td>rare exact tokens</td><td>synonyms, rewritten sentences</td></tr>
+<tr><td><b>Output</b></td><td><span class="kw">distance</span> · lower is better</td><td><span class="kw">score</span> · higher is better</td></tr>
+</table>
+
+<div class="card good">
+  <h4>Definition of hybrid search</h4>
+  Run both retrievers <b>separately</b>, then <b>merge</b> the two result lists. That is all. The hard part is the merge, not the running.
+</div>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="node">question</div>
+    <span class="arrow">→</span>
+    <div class="col">
+      <div class="node">dense_search → top 10</div>
+      <div class="node alt">bm25_search → top 10</div>
+    </div>
+    <span class="arrow">→</span>
+    <div class="node ok">fusion</div>
+    <span class="arrow">→</span>
+    <div class="node ok">top 4 → LLM</div>
+  </div>
+  <div class="cap">two retrievers, one merge step</div>
+</div>
+
+<!-- 3 -->
+<h2><span class="num">03</span> BM25 at a glance</h2>
+
+<p><span class="kw">BM25</span> is an improved <span class="kw">TF-IDF</span>. It gives each chunk one number, built from three factors:</p>
+
+<table>
+<tr><th>Factor</th><th>Name</th><th>Effect on the score</th></tr>
+<tr><td>How often does the word appear in this chunk?</td><td class="mono">TF · term frequency</td><td>more → higher <span class="bar" style="width:70px"></span></td></tr>
+<tr><td>How many other chunks contain it?</td><td class="mono">IDF · inverse document frequency</td><td>rarer → much higher <span class="bar b" style="width:100px"></span></td></tr>
+<tr><td>How long is this chunk?</td><td class="mono">length normalization</td><td>longer → lower <span class="bar c" style="width:30px"></span></td></tr>
+</table>
+
+<div class="card warn">
+  <h4>The key thing about IDF</h4>
+  A word like <span class="kw">"team"</span> that appears in every document gets almost zero weight. A word like <span class="kw">"incident"</span> that appears in one chunk only gets a very high weight. Exactly what test case 8 needs.
+</div>
+
+<p class="label">the only new library surface in this project</p>
+<pre><span class="c-key">from</span> rank_bm25 <span class="c-key">import</span> <span class="c-cls">BM25Okapi</span>
+
+<span class="c-com"># build ONCE at startup, never inside the search function</span>
+<span class="c-var">bm25</span> <span class="c-op">=</span> <span class="c-cls">BM25Okapi</span>([<span class="c-fn">tokenize</span>(t) <span class="c-key">for</span> t <span class="c-key">in</span> <span class="c-var">chunk_texts</span>])
+
+<span class="c-com"># per query -> one float for EVERY chunk, in corpus order</span>
+<span class="c-var">scores</span> <span class="c-op">=</span> <span class="c-var">bm25</span>.<span class="c-fn">get_scores</span>(<span class="c-fn">tokenize</span>(<span class="c-var">question</span>))
+<span class="c-com"># NOT sorted · NOT cut to k · NOT normalized  -> that part is your job</span></pre>
+
+<div class="card">
+  <h4>One tokenizer, both sides</h4>
+  The same function that tokenizes the corpus must tokenize the query. If one lowercases and the other does not, nothing matches — and nothing raises an error.
+</div>
+
+<!-- 4 -->
+<h2><span class="num">04</span> The real problem: two different scales</h2>
+
+<p>Now you have two lists. Why can't you just add the scores?</p>
+
+<div class="diagram">
+  <div class="scale">
+    <div style="margin-bottom:14px">
+      <b style="color:#9dc8ff">Chroma cosine distance</b> &nbsp; lower is better<br>
+      0.0 |<span class="bar b" style="width:180px"></span>| 2.0 &nbsp;&nbsp; bounded, inverted
+    </div>
+    <div>
+      <b style="color:#c9a9ff">BM25 score</b> &nbsp; higher is better<br>
+      0.0 |<span class="bar c" style="width:180px"></span>| ??? &nbsp;&nbsp; unbounded, query-dependent
+    </div>
+  </div>
+  <div class="cap">different direction · different range · different meaning</div>
+</div>
+
+<ul>
+  <li>One is <b>inverted</b> (lower is better), the other is not → one of them must be flipped first.</li>
+  <li>BM25 has <b>no upper bound</b>. A score of 8 is excellent for one query and ordinary for another — it is not comparable across queries.</li>
+  <li>A chunk may appear in <b>only one</b> list. What value does it get in the other? That is a design decision, not a fact.</li>
+</ul>
+
+<!-- 5 -->
+<h2><span class="num">05</span> Strategy A — Normalize + weighted sum</h2>
+
+<p>Scale both lists into 0..1, then add them with a weight.</p>
+
+<pre><span class="c-com"># pseudo-code - not the implementation</span>
+<span class="c-key">for</span> each list:
+    <span class="c-var">norm</span> <span class="c-op">=</span> (<span class="c-var">score</span> <span class="c-op">-</span> <span class="c-fn">min</span>) <span class="c-op">/</span> (<span class="c-fn">max</span> <span class="c-op">-</span> <span class="c-fn">min</span>)      <span class="c-com"># min-max normalization</span>
+
+<span class="c-var">fused</span> <span class="c-op">=</span> <span class="c-var">alpha</span> <span class="c-op">*</span> <span class="c-var">dense_norm</span> <span class="c-op">+</span> (<span class="c-num">1</span> <span class="c-op">-</span> <span class="c-var">alpha</span>) <span class="c-op">*</span> <span class="c-var">sparse_norm</span></pre>
+
+<div class="card warn">
+  <h4>Three traps</h4>
+  <ul>
+    <li>If every score is equal → <span class="kw">max - min = 0</span> → division by zero.</li>
+    <li>Normalization is done per query, so the best result always becomes 1.0 — even when it is a bad result in absolute terms.</li>
+    <li><span class="kw">alpha</span> is a hand-picked number. Without a labelled evaluation set, tuning it is guessing.</li>
+  </ul>
+</div>
+
+<div class="card good">
+  <h4>Sanity check</h4>
+  <span class="kw">alpha = 1.0</span> must reproduce <span class="kw">dense_only</span> exactly, and <span class="kw">alpha = 0.0</span> must reproduce <span class="kw">bm25_only</span> exactly. If it does not, the bug is in your normalization or in the default value you gave to single-list chunks.
+</div>
+
+<!-- 6 -->
+<h2><span class="num">06</span> Strategy B — RRF (Reciprocal Rank Fusion)</h2>
+
+<p>The core idea: <b>throw the scores away and keep only the ranks.</b> Remove the scores and the scale problem disappears with them.</p>
+
+<pre><span class="c-com"># rank is 1-based position inside each list</span>
+<span class="c-fn">score</span>(chunk) <span class="c-op">=</span> <span class="c-op">Σ</span>  <span class="c-num">1</span> <span class="c-op">/</span> (<span class="c-var">k</span> <span class="c-op">+</span> <span class="c-var">rank</span>)        <span class="c-com"># k = 60 by convention</span></pre>
+
+<h3>Worked example</h3>
+
+<div class="two">
+<table>
+<tr><th class="mono">Dense</th><th>rank</th></tr>
+<tr><td class="mono">A</td><td>1</td></tr>
+<tr><td class="mono">B</td><td>2</td></tr>
+<tr><td class="mono">C</td><td>3</td></tr>
+<tr><td class="mono">D</td><td>4</td></tr>
+</table>
+<table>
+<tr><th class="mono">BM25</th><th>rank</th></tr>
+<tr><td class="mono">E</td><td>1</td></tr>
+<tr><td class="mono">C</td><td>2</td></tr>
+<tr><td class="mono">A</td><td>3</td></tr>
+<tr><td class="mono">B</td><td>4</td></tr>
+</table>
+</div>
+
+<table>
+<tr><th class="mono">chunk</th><th class="mono">calculation (k = 60)</th><th class="mono">RRF score</th><th>result</th></tr>
+<tr class="hit"><td class="mono">A</td><td class="mono">1/61 + 1/63</td><td class="mono">0.03226</td><td>1st — in both lists, high</td></tr>
+<tr class="hit"><td class="mono">C</td><td class="mono">1/63 + 1/62</td><td class="mono">0.03200</td><td>2nd — in both lists, middle</td></tr>
+<tr class="hit"><td class="mono">B</td><td class="mono">1/62 + 1/64</td><td class="mono">0.03176</td><td>3rd — in both lists, low</td></tr>
+<tr><td class="mono">E</td><td class="mono">1/61</td><td class="mono">0.01639</td><td>4th — rank 1, but one list only</td></tr>
+<tr><td class="mono">D</td><td class="mono">1/64</td><td class="mono">0.01563</td><td>5th</td></tr>
+</table>
+
+<div class="card good">
+  <h4>What this table is telling you</h4>
+  <span class="kw">E</span> was rank 1 in BM25 and still <b>lost</b> to <span class="kw">B</span>, which ranked low in both lists. RRF inherently rewards <span class="kw">agreement</span> between the two retrievers — which is exactly the behaviour you want from hybrid search.
+</div>
+
+<h3>What <span class="kw">k</span> controls</h3>
+<ul>
+  <li><b>Large k (60)</b> → gaps between ranks shrink → "being in both lists" matters more than "being first".</li>
+  <li><b>Small k (1)</b> → rank 1 dominates → whoever wins one list wins overall.</li>
+</ul>
+
+<!-- 7 -->
+<h2><span class="num">07</span> Looking ahead — Reranking (Project 18)</h2>
+
+<p>The model you have been using is a <span class="kw">bi-encoder</span>: it encodes the question and the chunk <b>separately</b> and compares the vectors. It never sees the two together.</p>
+
+<div class="diagram">
+  <div class="flow" style="margin-bottom:20px">
+    <div class="col">
+      <div class="node">question</div>
+      <div class="node">chunk</div>
+    </div>
+    <span class="arrow">→</span>
+    <div class="col">
+      <div class="node alt">encode</div>
+      <div class="node alt">encode (precomputed)</div>
+    </div>
+    <span class="arrow">→</span>
+    <div class="node">cosine similarity</div>
+    <div class="node dim">bi-encoder · fast</div>
+  </div>
+  <div class="flow">
+    <div class="node">question + chunk together</div>
+    <span class="arrow">→</span>
+    <div class="node alt">one model pass</div>
+    <span class="arrow">→</span>
+    <div class="node ok">relevance score</div>
+    <div class="node dim">cross-encoder · accurate · slow</div>
+  </div>
+  <div class="cap">nothing can be precomputed for a cross-encoder — one model run per (question, chunk) pair</div>
+</div>
+
+<p>Because a cross-encoder runs per pair, it is impossible over 1000 chunks. So the architecture becomes <b>two-stage</b>:</p>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="node">question</div><span class="arrow">→</span>
+    <div class="node">hybrid retrieve · top 20</div><span class="arrow">→</span>
+    <div class="node alt">cross-encoder rerank</div><span class="arrow">→</span>
+    <div class="node ok">top 4</div><span class="arrow">→</span>
+    <div class="node ok">LLM</div>
+  </div>
+  <div class="cap">stage 1 = RECALL &nbsp;·&nbsp; stage 2 = PRECISION</div>
+</div>
+
+<table>
+<tr><th>Stage</th><th>Judged on</th><th>Meaning</th></tr>
+<tr><td class="mono">retrieve (top 20)</td><td class="mono">recall</td><td>don't lose the right answer — order does not matter</td></tr>
+<tr><td class="mono">rerank (top 4)</td><td class="mono">precision</td><td>put the best ones on top — order is everything</td></tr>
+</table>
+
+<div class="card bad">
+  <h4>The rule that explains the project order</h4>
+  If the correct chunk is not in those 20, the reranker can do <b>nothing</b>. That is why hybrid (recall) comes first and reranking (precision) comes second.
+</div>
+
+<!-- 8 -->
+<h2><span class="num">08</span> The diagnosis on test case 8</h2>
+
+<p>After hybrid runs, there are two possible outcomes — and each one decides what the next project has to do:</p>
+
+<div class="two">
+  <div class="card good">
+    <h4>The chunk is in the list, but ranked below 4</h4>
+    A <span class="kw">ranking</span> problem. Exactly what a <span class="kw">reranker</span> fixes. → Project 18
+  </div>
+  <div class="card bad">
+    <h4>The chunk is in neither list</h4>
+    A <span class="kw">recall</span> problem. A reranker is useless here; you need <span class="kw">query rewriting</span> or better chunking.
+  </div>
+</div>
+
+<!-- 9 -->
+<h2><span class="num">09</span> Glossary — the keywords</h2>
+
+<table>
+<tr><th class="mono">Keyword</th><th>Short meaning</th></tr>
+<tr><td class="mono">dense retrieval</td><td>search by semantic vector — what you have today</td></tr>
+<tr><td class="mono">sparse retrieval</td><td>word-based search — BM25</td></tr>
+<tr><td class="mono">BM25</td><td>keyword scoring algorithm: TF + IDF + length normalization</td></tr>
+<tr><td class="mono">TF / IDF</td><td>word frequency in the doc / rarity of the word across the corpus</td></tr>
+<tr><td class="mono">hybrid search</td><td>run dense and sparse together and merge the results</td></tr>
+<tr><td class="mono">fusion</td><td>the step that merges two ranked lists</td></tr>
+<tr><td class="mono">min-max normalization</td><td>rescaling scores into 0..1 so they can be added</td></tr>
+<tr><td class="mono">RRF</td><td>rank-based fusion: <span class="kw">Σ 1/(k+rank)</span></td></tr>
+<tr><td class="mono">bi-encoder</td><td>question and text encoded separately — fast</td></tr>
+<tr><td class="mono">cross-encoder</td><td>question and text go into the model together — accurate, slow</td></tr>
+<tr><td class="mono">reranking</td><td>re-ordering retrieved results with a more accurate model</td></tr>
+<tr><td class="mono">recall</td><td>was the right answer retrieved at all?</td></tr>
+<tr><td class="mono">precision</td><td>did the right answer reach the top?</td></tr>
+<tr><td class="mono">vocabulary mismatch</td><td>same meaning, no shared words — the cause of the test 8 failure</td></tr>
+<tr><td class="mono">query rewriting</td><td>an LLM rewrites the question into the documents' own vocabulary</td></tr>
+</table>
+
+<div class="card">
+  <h4>The interview sentence</h4>
+  <p>"For vocabulary mismatch I use hybrid search: BM25 alongside dense retrieval, merged with RRF, because the two scoring systems are not on a comparable scale. I judge the retrieve stage on recall and the rerank stage on precision."</p>
+</div>
+
+<footer>
+  Project 17 · companion to <span class="kw">README.md</span> and <span class="kw">inputs.json</span> — this page is concepts only; the implementation steps are in the README.
+</footer>
+
+</div>
+</body>
+</html>

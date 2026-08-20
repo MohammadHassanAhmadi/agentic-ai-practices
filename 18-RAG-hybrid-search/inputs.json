@@ -1,0 +1,62 @@
+{
+  "how_to_use": [
+    "Keep your 8 questions from Project 16 and add the new ones below.",
+    "'kind' says which retriever SHOULD win - that is the point of the case.",
+    "Fill 'expected_source' yourself from your own docs: the file (and chunk) that really contains the answer.",
+    "A case only teaches you something if you know the right answer before you run it."
+  ],
+  "field_meaning": {
+    "kind": "semantic = only dense can find it | keyword = only BM25 can find it | both = control case | neither = known miss",
+    "expected_source": "the source file that must appear in the top 4",
+    "why": "what this case is testing - write it, do not skip it"
+  },
+  "cases": [
+    {
+      "id": 1,
+      "question": "How much vacation do I get after a production incident?",
+      "kind": "semantic",
+      "expected_source": "TODO - the file with 'time off in lieu when paged'",
+      "why": "The Project 16 failure. Question wording and document wording share nothing except 'production'. Dense missed it at top_k=6. Does BM25 find it through the word 'incident'? Does fusion pull it into the top 4?"
+    },
+    {
+      "id": 2,
+      "question": "TODO - ask about something using an EXACT rare term from your docs (a tool name, an acronym, a version number, a policy name)",
+      "kind": "keyword",
+      "expected_source": "TODO",
+      "why": "Exact rare tokens are what BM25 is for. Dense embeddings blur them. This case should fail on dense and pass on sparse."
+    },
+    {
+      "id": 3,
+      "question": "TODO - take a sentence straight out of one of your docs and rewrite it with completely different words",
+      "kind": "semantic",
+      "expected_source": "TODO",
+      "why": "The mirror of case 2. Should pass on dense and fail on sparse. If it passes on both, the rewrite was not aggressive enough."
+    },
+    {
+      "id": 4,
+      "question": "TODO - a plain, obvious question your current pipeline already answers correctly",
+      "kind": "both",
+      "expected_source": "TODO",
+      "why": "Control case. Hybrid must not make an already-working question worse. This is the regression you are most likely to cause."
+    },
+    {
+      "id": 5,
+      "question": "TODO - a question containing a common word that appears in EVERY document (for example 'team' or 'policy')",
+      "kind": "both",
+      "expected_source": "TODO",
+      "why": "Tests IDF. A word present everywhere should carry almost no BM25 weight. If this case gets noticeably worse, look at your tokenizer and at stopwords."
+    },
+    {
+      "id": 6,
+      "question": "TODO - something none of your documents cover",
+      "kind": "neither",
+      "expected_source": null,
+      "why": "BM25 always returns k results, however bad they are - it has no concept of 'no match'. Check that the grounded prompt still answers 'I don't know' and that used_sources comes back empty."
+    }
+  ],
+  "comparison_table": {
+    "print_for_each_question": ["dense_only", "bm25_only", "weighted_alpha_0.5", "rrf_k_60"],
+    "columns": ["rank", "source#chunk_index", "raw_score", "hit?"],
+    "note": "Also try alpha 0.0 and 1.0 as a sanity check: alpha=1.0 must reproduce dense_only exactly, alpha=0.0 must reproduce bm25_only. If it does not, your normalization or your missing-value default is wrong."
+  }
+}
