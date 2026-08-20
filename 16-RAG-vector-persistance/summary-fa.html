@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>پروژه ۱۶ — جمع‌بندی و بستن</title>
+<style>
+  :root{
+    --bg:#1e1e1e; --panel:#252526; --panel2:#2d2d30; --line:#3c3c3c;
+    --fg:#d4d4d4; --muted:#9d9d9d; --accent:#4ec9b0; --accent2:#569cd6;
+    --warn:#ce9178; --ok:#6a9955; --yellow:#dcdcaa; --red:#f14c4c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:"Vazirmatn","Segoe UI",Tahoma,sans-serif; line-height:2; font-size:16px;}
+  .wrap{max-width:920px; margin:0 auto; padding:32px 20px 80px}
+  h1{color:var(--accent); font-size:28px; border-bottom:2px solid var(--line); padding-bottom:12px}
+  h2{color:var(--accent2); font-size:22px; margin-top:44px}
+  h3{color:var(--yellow); font-size:18px; margin-top:26px}
+  p{margin:12px 0}
+  code.inline{background:var(--panel2); color:var(--warn); padding:2px 6px; border-radius:4px;
+    font-family:Consolas,monospace; direction:ltr; display:inline-block; font-size:14px}
+  pre{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px;
+    overflow-x:auto; direction:ltr; text-align:left; font-family:Consolas,monospace;
+    font-size:13.5px; line-height:1.7}
+  .k{color:#569cd6} .f{color:#dcdcaa} .s{color:#ce9178} .n{color:#b5cea8}
+  .c{color:#6a9955} .t{color:#4ec9b0} .v{color:#9cdcfe}
+  .box{background:var(--panel); border:1px solid var(--line); border-right:4px solid var(--accent2);
+    border-radius:8px; padding:14px 18px; margin:20px 0}
+  .box.warn{border-right-color:var(--warn)}
+  .box.ok{border-right-color:var(--ok)}
+  .box.red{border-right-color:var(--red)}
+  table{width:100%; border-collapse:collapse; margin:18px 0; font-size:15px}
+  th,td{border:1px solid var(--line); padding:10px 12px; text-align:right; vertical-align:top}
+  th{background:var(--panel2); color:var(--accent)}
+  .diagram{background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:24px 16px; margin:22px 0; direction:ltr; text-align:center}
+  .row{display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px}
+  .node{background:var(--panel2); border:1px solid var(--accent2); color:var(--fg);
+    border-radius:6px; padding:9px 12px; font-family:Consolas,monospace; font-size:12.5px}
+  .node.store{border-color:var(--accent); color:var(--accent)}
+  .node.out{border-color:var(--yellow); color:var(--yellow)}
+  .arrow{color:var(--muted); font-size:18px}
+  .lane-title{color:var(--muted); font-family:Consolas,monospace; font-size:12px;
+    margin-bottom:8px; letter-spacing:1px}
+  .lane{margin:14px 0}
+  ul{padding-right:22px} li{margin:6px 0}
+  .score{font-size:42px; color:var(--ok); font-family:Consolas,monospace; text-align:center; margin:10px 0}
+  .tag{display:inline-block; background:var(--panel2); border:1px solid var(--line);
+    border-radius:20px; padding:3px 12px; font-size:13px; margin:3px 2px; color:var(--muted)}
+  .qa{direction:ltr; text-align:left}
+  .qa h3.q{color:var(--accent); font-family:Consolas,monospace; font-size:15.5px;
+    margin-top:30px; line-height:1.6}
+  .qa .box{border-right:none; border-left:4px solid var(--accent2); line-height:1.85; font-size:15px}
+  .qa code{background:var(--panel2); color:var(--warn); padding:1px 5px; border-radius:4px;
+    font-family:Consolas,monospace; font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>پروژه ۱۶ — جمع‌بندی و بستن</h1>
+<p style="color:var(--muted)">فایل واقعی + chunking + vector store &nbsp;·&nbsp; مرداد ۱۴۰۵ / August 2026</p>
+
+<div class="score">7 / 8</div>
+<p style="text-align:center; color:var(--muted); font-family:Consolas,monospace; font-size:13px">
+  test cases passing — the 8th is a known limitation, not a bug
+</p>
+
+<h2>۱. چه چیزی ساخته شد</h2>
+
+<div class="diagram">
+  <div class="lane">
+    <div class="lane-title">OFFLINE — ingest.py</div>
+    <div class="row">
+      <div class="node">docs/*.md</div><span class="arrow">→</span>
+      <div class="node">sha256 hash</div><span class="arrow">→</span>
+      <div class="node">boundary-aware<br>chunking</div><span class="arrow">→</span>
+      <div class="node">token guard</div><span class="arrow">→</span>
+      <div class="node">MiniLM embed<br>(batched)</div><span class="arrow">→</span>
+      <div class="node store">Chroma<br>(persistent)</div>
+    </div>
+  </div>
+  <div class="lane">
+    <div class="lane-title">ONLINE — ask.py</div>
+    <div class="row">
+      <div class="node">question</div><span class="arrow">→</span>
+      <div class="node">embed</div><span class="arrow">→</span>
+      <div class="node store">Chroma<br>top-k = 4</div><span class="arrow">→</span>
+      <div class="node">grounded<br>prompt</div><span class="arrow">→</span>
+      <div class="node">Azure<br>gpt-5.4-nano</div><span class="arrow">→</span>
+      <div class="node out">answer +<br>used_sources</div>
+    </div>
+  </div>
+</div>
+
+<table>
+  <tr><th>مورد</th><th>مقدار</th></tr>
+  <tr><td>فایل‌های ورودی</td><td>۴ فایل markdown</td></tr>
+  <tr><td>chunk size / overlap</td><td>۵۰۰ / ۱۰۰ کاراکتر</td></tr>
+  <tr><td>مدل embedding</td><td>all-MiniLM-L6-v2 (لوکال، رایگان، ۳۸۴ بعد، سقف ۲۵۶ توکن)</td></tr>
+  <tr><td>vector store</td><td>Chroma، فضای cosine، persist روی دیسک</td></tr>
+  <tr><td>مدل پاسخ</td><td>Azure gpt-5.4-nano با structured output</td></tr>
+  <tr><td>استراتژی ingest</td><td>A — rebuild کامل در هر اجرا</td></tr>
+</table>
+
+<h2>۲. مفاهیمی که یاد گرفتی</h2>
+
+<table>
+  <tr><th>مفهوم</th><th>چیزی که خودت با چشم دیدی</th></tr>
+  <tr>
+    <td><b>flatten</b></td>
+    <td>واحد ذخیره در vector store یک <b>chunk</b> است نه یک فایل. حلقه‌ی تو در تو، سه لیست موازی، یک <code class="inline">add</code>.</td>
+  </tr>
+  <tr>
+    <td><b>مرزهای chunk</b></td>
+    <td>بریدن کور روی کاراکتر، کلمه را وسط می‌شکند و تیتر را از پاراگرافش جدا می‌کند. این <b>مهم‌ترین</b> عامل کیفیت retrieval بود — مهم‌تر از اندازه‌ی chunk و مهم‌تر از prompt.</td>
+  </tr>
+  <tr>
+    <td><b>distance ≠ similarity</b></td>
+    <td>جواب‌های درست distance بین ۰.۳۳ تا ۰.۵۸ داشتند؛ سوال کاملاً بی‌ربط ۰.۹۲. مرز واقعی حدود ۰.۸ بود، نه ۰.۵. یک threshold شهودی، اکثر جواب‌های درست را می‌کشت.</td>
+  </tr>
+  <tr>
+    <td><b>offline / online</b></td>
+    <td>index یک بار، query بی‌نهایت بار. تنها چیز مشترک بین دو اسکریپت، خود store است.</td>
+  </tr>
+  <tr>
+    <td><b>سقف توکن</b></td>
+    <td>مدل embedding بی‌سروصدا متن اضافه را دور می‌ریزد. assert لازم است، نه اختیاری.</td>
+  </tr>
+  <tr>
+    <td><b>vocabulary mismatch</b></td>
+    <td>«vacation after a production incident» هرگز «time off in lieu when paged» را پیدا نکرد — حتی در top-6. vector search مترادف‌های دور را نمی‌بیند.</td>
+  </tr>
+  <tr>
+    <td><b>system vs user prompt</b></td>
+    <td>قوانین در system، داده در user. هم مدل بهتر اطاعت می‌کند، هم مرز دفاعی در برابر prompt injection است.</td>
+  </tr>
+</table>
+
+<h2>۳. باگ‌هایی که خوردی و درسشان</h2>
+
+<table>
+  <tr><th>باگ</th><th>چرا خطرناک بود</th></tr>
+  <tr><td><code class="inline">glob("*.md)")</code></td><td>ارور نداد. لیست خالی، اجرای موفق، collection خالی. <b>باگ خاموش.</b></td></tr>
+  <tr><td>واحد <code class="inline">add()</code> فایل گرفته شد نه chunk</td><td>برداشت مفهومی اشتباه، نه اشتباه تایپی. سه فیلد همزمان غلط شدند.</td></tr>
+  <tr><td><code class="inline">collection.count</code> بدون پرانتز</td><td>در C# کامپایلر می‌گیرد، در پایتون بی‌صدا چاپ می‌شود.</td></tr>
+  <tr><td><code class="inline">SYSTEM_PROMPT.format(...)</code> به‌جای <code class="inline">USER_PROMPT</code></td><td>چون SYSTEM جای خالی نداشت، <code class="inline">format</code> ارور نداد. مدل هرگز سوال را ندید.</td></tr>
+  <tr><td>مسیر نسبی <code class="inline">"chroma_db"</code></td><td>وابسته به CWD بود، نه به محل فایل. دو اسکریپت به دو دیتابیس مختلف نگاه می‌کردند.</td></tr>
+  <tr><td><code class="inline">rfind</code> روی slice</td><td>ایندکس نسبی برگرداند و به‌عنوان مطلق استفاده شد — chunk بعدی از عقب‌تر شروع می‌شد.</td></tr>
+</table>
+
+<div class="box warn">
+  <b>الگوی مشترک:</b> پنج تا از این شش باگ <b>هیچ اروری نمی‌دادند</b>. در RAG، خرابی معمولاً به شکل crash ظاهر نمی‌شود — به شکل «جواب یک کم بی‌ربط» ظاهر می‌شود. برای همین چاپ کردن distance و متن chunk ها، ابزار اصلی دیباگ توست.
+</div>
+
+<h2>۴. محدودیت شناخته‌شده — تست ۸</h2>
+
+<p><b>سوال:</b> How much vacation do I get after a production incident?</p>
+<p><b>پاسخ سیستم:</b> I don't know based on the provided documents.</p>
+
+<p>
+سند می‌گوید «additional <b>time off in lieu</b> if they are <b>paged</b> outside working hours».
+سوال می‌گوید «<b>vacation</b>» و «<b>production incident</b>». هیچ کلمه‌ی مشترکی ندارند و بردارهایشان
+به‌اندازه‌ی کافی نزدیک نیستند — حتی با <code class="inline">TOP_K = 6</code> آن chunk بازیابی نشد.
+</p>
+
+<div class="box red">
+  این یک <b>باگ نیست</b> — محدودیت ذاتی dense vector search است. هیچ‌کدام از ابزارهای این پروژه (اندازه‌ی chunk، مرز chunk، prompt، top_k) حلش نمی‌کنند.
+</div>
+
+<table>
+  <tr><th>راه‌حل واقعی</th><th>چه می‌کند</th></tr>
+  <tr><td>hybrid search (BM25 + vector)</td><td>جستجوی کلیدواژه‌ای در کنار معنایی — «incident» را لغت‌به‌لغت پیدا می‌کند</td></tr>
+  <tr><td>reranker (cross-encoder)</td><td>سوال و chunk را <b>با هم</b> می‌خواند، نه جدا — ربط را خیلی دقیق‌تر می‌سنجد</td></tr>
+  <tr><td>query rewriting</td><td>LLM سوال را بازنویسی می‌کند: «incident» → «paged», «on-call»</td></tr>
+</table>
+
+<h2>۵. برای بعداً</h2>
+
+<table>
+  <tr><th>#</th><th>کار</th><th>اندازه</th><th>چرا</th></tr>
+  <tr><td>۱</td><td>ingest از PDF</td><td>کوچک</td><td>فقط <code class="inline">load_documents</code> عوض می‌شود. مشکلات جدید: ستون‌ها، جدول‌ها، header/footer تکراری، PDF اسکن‌شده (OCR).</td></tr>
+  <tr><td>۲</td><td>ingest افزایشی (استراتژی C)</td><td>کوچک</td><td><code class="inline">file_hash</code> از قبل در متادیتا ذخیره شده. فقط فایل تغییرکرده دوباره embed شود؛ فایل حذف‌شده پاک شود.</td></tr>
+  <tr><td>۳</td><td>ingest با LangGraph</td><td>متوسط</td><td>فقط وقتی ارزش دارد که موازی‌سازی (<code class="inline">Send</code>)، retry هر فایل، یا resume با checkpointer بخواهی. روی خط مستقیم، صرفاً پیچیدگی است.</td></tr>
+  <tr><td>۴</td><td>hybrid search + reranking</td><td>بزرگ</td><td>پروژه‌ی ۱۷. بزرگ‌ترین جهش کیفیت در RAG واقعی — و همان چیزی که تست ۸ را حل می‌کند.</td></tr>
+  <tr><td>۵</td><td>chunking بر اساس توکن</td><td>کوچک</td><td>لازم می‌شود اگر متن فارسی یا کد ingest کنی — نسبت کاراکتر به توکن کاملاً فرق می‌کند.</td></tr>
+</table>
+
+<h2>۶. ارتباط با کار واقعی</h2>
+
+<p>
+این دقیقاً شکل هر سیستم RAG در production است: یک <b>indexing job</b> آفلاین و یک <b>query path</b> آنلاین
+که فقط از طریق vector store با هم حرف می‌زنند.
+</p>
+
+<h3>در production چه فرقی دارد</h3>
+<ul>
+  <li>re-index افزایشی است (بر اساس content hash) — نه rebuild کامل</li>
+  <li>store یک سرویس مدیریت‌شده است: pgvector، Pinecone، Azure AI Search</li>
+  <li>chunking ساختارآگاه است: تیترها، جدول‌ها، بلوک‌های کد جداگانه هندل می‌شوند</li>
+  <li>بین retrieval و LLM یک reranker هست</li>
+  <li>نام مدل embedding کنار داده ذخیره می‌شود — عوض شدنش یعنی rebuild اجباری</li>
+</ul>
+
+<h2>۷. سوال و جواب مصاحبه</h2>
+
+<p style="color:var(--muted)">
+جواب‌ها انگلیسی‌اند چون در مصاحبه همین‌طور می‌گویی‌شان. هر کدام به یک چیز واقعی
+در همین پروژه وصل است — همان چیزی که جواب را باورپذیر می‌کند.
+</p>
+
+<div class="qa">
+
+<h3 class="q">Q1 · How do you pick chunk size? What is the trade-off?</h3>
+<div class="box">
+There is no formula — you measure. Too small and each chunk loses the context that
+makes it meaningful: in my project, 300-character chunks separated a markdown heading
+from the paragraph under it, and retrieval got measurably worse. Too large and one
+vector has to represent several topics at once, so it matches everything weakly and
+nothing strongly. I settled on 500 characters with 100 overlap, but the bigger decision
+was <i>where</i> I cut, not how much. One hard ceiling: the embedding model's token
+limit — all-MiniLM-L6-v2 caps at 256 tokens and silently truncates past it, so I assert
+on token count before embedding instead of trusting the character count.
+</div>
+
+<h3 class="q">Q2 · Why does chunk overlap exist?</h3>
+<div class="box">
+A hard cut can land in the middle of a sentence or an idea, so the fact you need ends up
+split across two chunks and neither one answers the question. Overlap repeats the tail of
+the previous chunk at the start of the next one, so a fact near a boundary survives in at
+least one complete chunk. Typically 10–20% of chunk size. The implementation trap is that
+if overlap is greater than or equal to chunk size, the loop never advances and hangs — so
+I validate that up front.
+</div>
+
+<h3 class="q">Q3 · How do you re-index when a document changes?</h3>
+<div class="box">
+The unit of update is the file, so I store <code>source</code> and a content hash in each
+chunk's metadata. On ingest I hash the file and compare: unchanged means skip, changed
+means delete that file's chunks and re-add only them, and a file that no longer exists on
+disk gets its chunks deleted. Full rebuild is fine at small scale — I used it here because
+it can never leave stale data behind — but it does not scale. The dangerous middle ground
+is append-only: it raises no error, it just quietly leaves the old version of a document
+sitting next to the new one, and the model can answer from either.
+</div>
+
+<h3 class="q">Q4 · When does vector search fail?</h3>
+<div class="box">
+When the question and the document mean the same thing but share no vocabulary. I hit this
+concretely: my document said "additional time off in lieu if they are paged outside working
+hours", and the question asked "how much vacation do I get after a production incident".
+Semantically the same, but the right chunk did not come back even in the top 6. Embeddings
+capture similarity, not reasoning — nothing about chunking, chunk size, prompt wording or
+top_k fixes it. The real fixes are hybrid search (BM25 alongside vector), a cross-encoder
+reranker, or LLM query rewriting.
+</div>
+
+<h3 class="q">Q5 · How do you stop the model hallucinating citations?</h3>
+<div class="box">
+Two layers. First the prompt: every context line is prefixed with its source, and the model
+is told to return only the sources it actually used — not everything it was shown. Second,
+code: the answer comes back as a structured object with a <code>used_sources</code> list,
+and I check every entry against the set of chunks actually retrieved for that question.
+Anything not in that set is a hallucination and gets flagged. The prompt reduces the
+problem; only the code check catches it.
+</div>
+
+<h3 class="q">Q6 · Why cosine distance and not the default?</h3>
+<div class="box">
+Chroma defaults to L2 (Euclidean) distance, but embedding models like all-MiniLM are trained
+for cosine similarity — direction carries the meaning, magnitude does not. Mismatching them
+degrades ranking silently. Also worth knowing: Chroma returns <i>distance</i>, where smaller
+is better, while a hand-rolled cosine similarity returns the opposite. In my project the
+correct answers scored 0.33–0.58 distance and a completely off-topic question scored 0.92,
+so the real relevance boundary sat near 0.8, not the 0.5 you would guess. An intuitive
+threshold would have thrown away most of the correct answers.
+</div>
+
+<h3 class="q">Q7 · Why split indexing and querying into two processes?</h3>
+<div class="box">
+Cost and latency. Embedding is the expensive step and the documents do not change per
+question, so you pay for it once offline and reuse it for every query. The vector store is
+the only thing the two halves share. It also means the two sides can scale and be deployed
+independently — the indexing job can be a nightly batch while the query path stays a
+low-latency service. The constraint is that both sides must use the same embedding model:
+different models put vectors in different spaces, and comparing across them is meaningless.
+</div>
+
+<h3 class="q">Q8 · How would you improve retrieval quality from here?</h3>
+<div class="box">
+In order of payoff. First hybrid search — run BM25 keyword search alongside vector search
+and merge the results, which catches exact terms that embeddings miss. Then a cross-encoder
+reranker: retrieve a wider set, say top 20, and rescore it with a model that reads the
+question and the chunk together rather than embedding them separately. Then query rewriting,
+where an LLM expands the user's wording into the vocabulary the documents actually use.
+Structure-aware chunking that keeps headings attached to their sections also helps, and I
+saw that effect directly in this project.
+</div>
+
+</div>
+
+<h2>۸. مهارت‌های این پروژه</h2>
+<p>
+<span class="tag">chunking</span>
+<span class="tag">boundary detection</span>
+<span class="tag">vector store</span>
+<span class="tag">Chroma</span>
+<span class="tag">persistence</span>
+<span class="tag">metadata design</span>
+<span class="tag">batched embedding</span>
+<span class="tag">offline / online split</span>
+<span class="tag">grounded prompting</span>
+<span class="tag">citation validation</span>
+<span class="tag">structured output</span>
+<span class="tag">controlled experiments</span>
+</p>
+
+<div class="box ok">
+  <b>پروژه ۱۶ بسته شد.</b> قدم بعدی وقتی برگشتی: پروژه ۱۷ — hybrid search و reranking.
+</div>
+
+</div>
+</body>
+</html>

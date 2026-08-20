@@ -40,3 +40,4 @@ results/
 states/
 runs/
 *.db
+*.bin

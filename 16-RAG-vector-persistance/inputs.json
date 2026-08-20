@@ -1,0 +1,61 @@
+{
+  "description": "Test cases for Project 16. Run each question through ask.py. expected_output_contains is a hint for you, not a strict string assert - the model may word it differently. Check the meaning and the source, not the exact characters.",
+  "cases": [
+    {
+      "id": 1,
+      "question": "Can I deploy to production on Friday?",
+      "expected_source": "deployment.md",
+      "expected_output_contains": ["Friday", "blocked"],
+      "why": "Basic retrieval. The answer sits in one chunk."
+    },
+    {
+      "id": 2,
+      "question": "How many days of annual leave do I get, and how many carry over?",
+      "expected_source": "timeoff.md",
+      "expected_output_contains": ["twenty-five", "five"],
+      "why": "Two facts that live in two different paragraphs of the same file. Tests whether your chunk size / top_k brings back both."
+    },
+    {
+      "id": 3,
+      "question": "I accidentally committed a secret key. What do I do first?",
+      "expected_source": "security.md",
+      "expected_output_contains": ["rotate"],
+      "why": "The document says rotate FIRST, clean history second. Tests that the answer keeps the ordering, not just the keywords."
+    },
+    {
+      "id": 4,
+      "question": "What should I install before I can build a service locally?",
+      "expected_source": "onboarding.md",
+      "expected_output_contains": ["bootstrap.sh"],
+      "why": "Answer is in the middle of a paragraph, not at a heading."
+    },
+    {
+      "id": 5,
+      "question": "Why must database migrations be backward compatible?",
+      "expected_source": "deployment.md",
+      "expected_output_contains": ["rollback"],
+      "why": "The reason is stated in a different paragraph than the rule. Good check for overlap."
+    },
+    {
+      "id": 6,
+      "question": "Can I copy production customer data to my laptop for debugging?",
+      "expected_source": "security.md",
+      "expected_output_contains": ["never", "anonymised"],
+      "why": "Negative answer. Must not be softened by the model."
+    },
+    {
+      "id": 7,
+      "question": "What is the capital of Portugal?",
+      "expected_source": null,
+      "expected_output_contains": ["don't know"],
+      "why": "Off-topic. Must return no sources and refuse to answer from model knowledge."
+    },
+    {
+      "id": 8,
+      "question": "How much vacation do I get after a production incident?",
+      "expected_source": "timeoff.md",
+      "expected_output_contains": ["on-call", "lieu"],
+      "why": "Trap. The question mixes two documents' vocabulary. Retrieval will likely pull chunks from both deployment.md and timeoff.md - the grounded prompt must pick the right one."
+    }
+  ]
+}
