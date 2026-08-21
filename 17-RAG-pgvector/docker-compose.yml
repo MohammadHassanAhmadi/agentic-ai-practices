@@ -1,0 +1,29 @@
+# Postgres + pgvector for Project 17.
+#   docker compose up -d      start
+#   docker compose down       stop (data survives)
+#   docker compose down -v    stop AND delete the volume (data gone)
+#
+# Port 5433 on the host, not 5432, so this cannot collide with a Postgres
+# you may already have installed on Windows.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: rag-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: ragpass
+      POSTGRES_DB: ragdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag -d ragdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

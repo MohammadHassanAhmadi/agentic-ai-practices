@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>پروژه ۱۷ — مقدمه pgvector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1115; --panel:#161a21; --code-bg:#1e1e1e; --line:#2a2f3a;
+    --fg:#d7dbe0; --muted:#8b93a1; --accent:#4EC9B0; --accent2:#569CD6;
+    --warn:#E5C07B; --bad:#E06C75; --good:#98C379;
+    /* VS Code Dark+ */
+    --c-key:#569CD6; --c-str:#CE9178; --c-com:#6A9955; --c-num:#B5CEA8;
+    --c-fn:#DCDCAA; --c-type:#4EC9B0; --c-var:#9CDCFE; --c-op:#D4D4D4; --c-op2:#C586C0;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:'Vazirmatn',Tahoma,'Segoe UI',sans-serif;
+    line-height:2; font-size:16px;
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:40px 22px 90px}
+  h1{font-size:30px;margin:0 0 6px;color:#fff;font-weight:700}
+  .sub{color:var(--muted);margin:0 0 34px;font-size:15px}
+  h2{
+    font-size:21px;margin:46px 0 14px;color:#fff;font-weight:700;
+    border-right:4px solid var(--accent);padding-right:12px;
+  }
+  h3{font-size:17px;margin:28px 0 8px;color:var(--accent2);font-weight:600}
+  p{margin:12px 0}
+  ul,ol{padding-right:22px;margin:12px 0}
+  li{margin:7px 0}
+  code:not(pre code){
+    background:#232833;color:var(--accent);padding:2px 6px;border-radius:5px;
+    font-family:Consolas,'Courier New',monospace;font-size:13.5px;direction:ltr;display:inline-block
+  }
+  pre{
+    background:var(--code-bg);border:1px solid var(--line);border-radius:10px;
+    padding:16px 18px;overflow-x:auto;direction:ltr;text-align:left;
+    font-family:Consolas,'Courier New',monospace;font-size:13.5px;line-height:1.75;
+    margin:14px 0; tab-size:2;
+  }
+  pre .k{color:var(--c-key)} pre .s{color:var(--c-str)} pre .c{color:var(--c-com)}
+  pre .n{color:var(--c-num)} pre .f{color:var(--c-fn)} pre .t{color:var(--c-type)}
+  pre .v{color:var(--c-var)} pre .o{color:var(--c-op)} pre .o2{color:var(--c-op2)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:18px 0}
+  .note{border-right:4px solid var(--accent2)}
+  .warn{border-right:4px solid var(--warn)}
+  .bad{border-right:4px solid var(--bad)}
+  .panel .title{font-weight:700;margin-bottom:6px;color:#fff}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:right;vertical-align:top}
+  th{background:#1b2029;color:#fff;font-weight:600}
+  td code{font-size:13px}
+  .ltr{direction:ltr;text-align:left}
+  .diagram{
+    background:var(--code-bg);border:1px solid var(--line);border-radius:10px;
+    padding:20px;margin:18px 0;direction:ltr;text-align:left;overflow-x:auto;
+    font-family:Consolas,'Courier New',monospace;font-size:13px;line-height:1.9;color:var(--muted);
+    white-space:pre;
+  }
+  .diagram b{color:var(--accent);font-weight:400}
+  .diagram i{color:var(--warn);font-style:normal}
+  hr{border:0;border-top:1px solid var(--line);margin:40px 0}
+  .kbd{color:var(--good)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>پروژه ۱۷ — مقدمه pgvector</h1>
+<p class="sub">قبل از نوشتن کد بخوان. هدف اینه که بدونی داری چه کار می‌کنی، نه اینکه کد رو کپی کنی.</p>
+
+<h2>۱. مسئله چیه؟</h2>
+
+<p>
+تو پروژه ۱۶ از Chroma استفاده کردی. کار کرد، ولی یه چیزی رو ازت قایم کرد:
+<b>هیچ‌وقت ندیدی داده‌ها واقعاً چطور ذخیره و پیدا می‌شن.</b>
+تو نوشتی <code>collection.query(...)</code> و جواب اومد. همین.
+</p>
+
+<p>سه تا سؤال هست که با Chroma نمی‌تونی جواب بدی:</p>
+
+<ul>
+  <li>وقتی می‌گی «شباهت cosine»، دقیقاً چه عملیاتی روی چه ساختاری اجرا می‌شه؟</li>
+  <li>ایندکس کجاست؟ اصلاً ایندکسی ساخته شده؟ داره استفاده می‌شه؟</li>
+  <li>اگه بخوام کنار جستجوی برداری یه فیلتر معمولی هم بزنم (مثلاً فقط فایل‌های امسال)، چی می‌شه؟</li>
+</ul>
+
+<p>
+تو یه Senior .NET developer ای. اگه یکی بهت بگه «EF Core یه لیست بهت می‌ده، نگران SQL ـش نباش»،
+قبول نمی‌کنی. اینجا هم همون‌طوره.
+</p>
+
+<div class="panel note">
+  <div class="title">دلیل دوم، عملی‌تر</div>
+  اکثر شرکت‌ها از قبل Postgres دارن. اضافه کردن یه دیتابیس جدید فقط برای بردارها یعنی
+  یه سرویس جدید، یه backup جدید، یه سری credential جدید. تا چند میلیون بردار،
+  pgvector جواب می‌ده و هیچ‌کدوم از اون هزینه‌ها رو نداره. برای همین
+  <b>جواب پیش‌فرض صنعت برای RAG کوچک و متوسط ـه</b>.
+</div>
+
+<h2>۲. pgvector در یک جمله</h2>
+
+<p>
+pgvector یه دیتابیس جدید نیست. یه <b>افزونه (extension)</b> برای PostgreSQL ـه که
+سه چیز اضافه می‌کنه:
+</p>
+
+<ol>
+  <li>یه نوع ستون جدید به اسم <code>vector</code></li>
+  <li>چند تا <b>عملگر فاصله</b> بین دو بردار</li>
+  <li>دو نوع <b>ایندکس</b> برای اینکه پیدا کردن نزدیک‌ترین بردارها سریع باشه</li>
+</ol>
+
+<p>و بس. بقیه‌اش همون Postgres همیشگیه: جدول، ستون، <code>WHERE</code>، <code>JOIN</code>، تراکنش.</p>
+
+<div class="diagram">
+  <b>Chroma (Project 16)</b>                 <b>pgvector (Project 17)</b>
+
+  ┌──────────────────────┐          ┌──────────────────────────────┐
+  │  collection          │          │  TABLE chunks                │
+  │                      │          │                              │
+  │   ids       [...]    │          │   id           BIGSERIAL     │
+  │   documents [...]    │   ==&gt;    │   source       TEXT          │
+  │   metadatas [...]    │          │   chunk_index  INT           │
+  │   embeddings[...]    │          │   content      TEXT          │
+  │                      │          │   embedding    <i>VECTOR(384)</i>   │
+  └──────────────────────┘          └──────────────────────────────┘
+     hidden storage                     an ordinary SQL table
+     hidden index                       + one new column type
+</div>
+
+<p>
+نکته‌ی کلیدی این تصویر: <b>metadata دیگه یه دیکشنری جدا نیست، ستون معمولیه.</b>
+یعنی <code>WHERE source = 'timeoff.md'</code> همون‌قدر عادیه که تو هر جدول دیگه‌ای.
+</p>
+
+<h2>۳. پنج چیز جدیدی که باید یاد بگیری</h2>
+
+<h3>۳.۱ — افزونه باید نصب بشه</h3>
+
+<pre><span class="k">CREATE EXTENSION IF NOT EXISTS</span> vector<span class="o">;</span></pre>
+
+<p>
+یک‌بار برای هر دیتابیس. قبل از این خط، Postgres اصلاً کلمه‌ی <code>vector</code> رو نمی‌شناسه.
+ایمیج داکری که بهت دادم افزونه رو <b>نصب</b> داره ولی <b>فعال</b> نکرده — این خط کار توئه.
+</p>
+
+<h3>۳.۲ — بُعد بردار توی schema ثابت می‌شه</h3>
+
+<pre><span class="k">CREATE TABLE</span> chunks <span class="o">(</span>
+  id          <span class="t">BIGSERIAL</span> <span class="k">PRIMARY KEY</span><span class="o">,</span>
+  source      <span class="t">TEXT</span>      <span class="k">NOT NULL</span><span class="o">,</span>
+  chunk_index <span class="t">INT</span>       <span class="k">NOT NULL</span><span class="o">,</span>
+  file_hash   <span class="t">TEXT</span>      <span class="k">NOT NULL</span><span class="o">,</span>
+  content     <span class="t">TEXT</span>      <span class="k">NOT NULL</span><span class="o">,</span>
+  embedding   <span class="t">VECTOR</span><span class="o">(</span><span class="n">384</span><span class="o">)</span> <span class="k">NOT NULL</span>
+<span class="o">);</span></pre>
+
+<p>
+اون <code>384</code> عدد ابعاد مدل <code>all-MiniLM-L6-v2</code> ـه.
+حالا <b>مدل embedding بخشی از DDL توئه</b>. این خیلی مهمه:
+</p>
+
+<div class="panel warn">
+  <div class="title">تله</div>
+  اگه فردا مدل رو عوض کنی و مدل جدید ۷۶۸ بُعدی باشه، <code>INSERT</code> خطا می‌ده.
+  <b>این خبر خوبیه.</b> تو Chroma این خطا رو نمی‌گرفتی — فقط جواب‌ها بی‌سروته می‌شدن.
+  Postgres داره یه اشتباه خاموش رو تبدیل به یه خطای بلند می‌کنه.
+</div>
+
+<h3>۳.۳ — عملگرهای فاصله</h3>
+
+<table>
+  <tr><th>عملگر</th><th>معنی</th><th>بازه</th><th>کِی؟</th></tr>
+  <tr><td class="ltr"><code>&lt;=&gt;</code></td><td>فاصله cosine</td><td class="ltr">0 … 2</td><td>مدل‌های جمله‌ای مثل MiniLM — <b>انتخاب ما</b></td></tr>
+  <tr><td class="ltr"><code>&lt;-&gt;</code></td><td>فاصله L2 (اقلیدسی)</td><td class="ltr">0 … ∞</td><td>وقتی طول بردار معنی داره</td></tr>
+  <tr><td class="ltr"><code>&lt;#&gt;</code></td><td>ضرب داخلی منفی</td><td class="ltr">−∞ … ∞</td><td>مدل‌هایی که برای dot product آموزش دیدن</td></tr>
+</table>
+
+<p>
+همه‌شون <b>فاصله</b> برمی‌گردونن، نه شباهت. یعنی <b>کمتر = بهتر</b> — دقیقاً مثل Chroma.
+رابطه‌ی ساده‌ش:
+</p>
+
+<pre class="ltr"><span class="c">-- cosine distance = 1 - cosine similarity</span>
+<span class="c">--   0  -&gt; identical direction</span>
+<span class="c">--   1  -&gt; perpendicular (unrelated)</span>
+<span class="c">--   2  -&gt; exactly opposite</span></pre>
+
+<p>
+یادت باشه تو پروژه ۱۶ دیدی که مرز واقعی حدود <code>0.8</code> بود نه <code>0.5</code>.
+همون درس اینجا هم برقراره. عدد عوض نمی‌شه، فقط اسمش از <code>distance</code> به
+<code>&lt;=&gt;</code> تغییر می‌کنه.
+</p>
+
+<h3>۳.۴ — جستجوی نزدیک‌ترین همسایه فقط یه ORDER BY ـه</h3>
+
+<p>هیچ تابع <code>query()</code> ای وجود نداره. این کل ماجراست:</p>
+
+<pre><span class="k">SELECT</span> source<span class="o">,</span> chunk_index<span class="o">,</span> content<span class="o">,</span>
+       embedding <span class="o2">&lt;=&gt;</span> <span class="v">%s</span> <span class="k">AS</span> distance
+<span class="k">FROM</span>   chunks
+<span class="k">ORDER BY</span> embedding <span class="o2">&lt;=&gt;</span> <span class="v">%s</span>
+<span class="k">LIMIT</span>  <span class="v">%s</span><span class="o">;</span></pre>
+
+<p>
+همین. <code>ORDER BY فاصله</code> + <code>LIMIT k</code> = top-k.
+اون <code>%s</code> ها placeholder ـن و بردار سؤال رو بهشون پاس می‌دی.
+</p>
+
+<div class="panel note">
+  <div class="title">چرا عملگر دو بار نوشته شده؟</div>
+  یک‌بار توی <code>SELECT</code> چون می‌خوای عدد فاصله رو <b>ببینی</b> (برای دیباگ — همون کاری که
+  تو پروژه ۱۶ با چاپ distance می‌کردی)، و یک‌بار توی <code>ORDER BY</code> چون می‌خوای
+  <b>مرتب‌سازی</b> بشه. Postgres به‌اندازه‌ی کافی باهوش هست که دو بار حسابش نکنه.
+</div>
+
+<p>و فیلتر metadata فقط یه <code>WHERE</code> معمولیه:</p>
+
+<pre><span class="k">SELECT</span> content<span class="o">,</span> embedding <span class="o2">&lt;=&gt;</span> <span class="v">%s</span> <span class="k">AS</span> distance
+<span class="k">FROM</span>   chunks
+<span class="k">WHERE</span>  source <span class="o2">LIKE</span> <span class="s">'%.pdf'</span>          <span class="c">-- ordinary SQL, no special API</span>
+<span class="k">ORDER BY</span> embedding <span class="o2">&lt;=&gt;</span> <span class="v">%s</span>
+<span class="k">LIMIT</span>  <span class="n">5</span><span class="o">;</span></pre>
+
+<h3>۳.۵ — ایندکس باید با عملگر جور باشه</h3>
+
+<pre><span class="k">CREATE INDEX</span> <span class="k">ON</span> chunks
+<span class="k">USING</span> <span class="f">hnsw</span> <span class="o">(</span>embedding <span class="t">vector_cosine_ops</span><span class="o">);</span>
+<span class="c">--                            ^^^^^^^^^^^^^^^^^</span>
+<span class="c">-- must match the operator you query with:</span>
+<span class="c">--   vector_cosine_ops  &lt;-&gt;  &lt;=&gt;</span>
+<span class="c">--   vector_l2_ops      &lt;-&gt;  &lt;-&gt;</span>
+<span class="c">--   vector_ip_ops      &lt;-&gt;  &lt;#&gt;</span></pre>
+
+<div class="panel bad">
+  <div class="title">تله‌ی مهم (از همون خانواده‌ی باگ‌های پروژه ۱۶)</div>
+  اگه ایندکس رو با <code>vector_l2_ops</code> بسازی ولی با <code>&lt;=&gt;</code> کوئری بزنی،
+  <b>هیچ خطایی نمی‌گیری</b>. نتیجه‌ها هم درستن. فقط ایندکس نادیده گرفته می‌شه و
+  Postgres کل جدول رو اسکن می‌کنه. روی ۱۹ چانک اصلاً نمی‌فهمی. روی ۱۹ میلیون، فاجعه‌ست.
+  <br><br>
+  راه فهمیدنش یکیه: <code>EXPLAIN ANALYZE</code>.
+</div>
+
+<p>دو نوع ایندکس هست:</p>
+
+<table>
+  <tr><th>نوع</th><th>سرعت ساخت</th><th>سرعت کوئری</th><th>نکته</th></tr>
+  <tr><td class="ltr"><code>hnsw</code></td><td>کند</td><td>خیلی سریع</td><td>پیش‌فرض خوب. روی جدول خالی هم می‌شه ساخت.</td></tr>
+  <tr><td class="ltr"><code>ivfflat</code></td><td>سریع</td><td>سریع</td><td>باید <b>بعد از</b> پر شدن داده ساخته بشه، وگرنه بی‌کیفیته.</td></tr>
+</table>
+
+<div class="panel warn">
+  <div class="title">هر دو تقریبی‌اند (ANN)</div>
+  با ایندکس، ممکنه یه همسایه‌ی درست رو <b>از دست بدی</b>. این یه معامله‌ست: سرعت در برابر recall.
+  بدون ایندکس، Postgres کل جدول رو می‌گرده و جواب همیشه دقیقه.
+  <br>
+  Chroma هم دقیقاً همین معامله رو می‌کرد (HNSW). تو فقط هیچ‌وقت ندیدیش.
+  <br><br>
+  اهرم تنظیمش: <code>SET hnsw.ef_search = 100;</code> — بزرگ‌تر یعنی دقیق‌تر و کندتر (پیش‌فرض ۴۰).
+</div>
+
+<h2>۴. تصویر کامل جریان کار</h2>
+
+<div class="diagram">
+  <b>OFFLINE — ingest.py</b>   (run when documents change)
+
+    docs/*.md  ┐
+    docs/*.pdf ┘ ──&gt; text ──&gt; <i>RecursiveCharacterTextSplitter</i> ──&gt; chunks
+                                                                    │
+                                          MiniLM (384 dims) &lt;───────┘
+                                                    │
+                                                    v
+                              INSERT INTO chunks (source, content, embedding, ...)
+                                                    │
+                                                    v
+                                        ┌───────────────────────┐
+                                        │  PostgreSQL + vector  │
+                                        │  table: chunks        │
+                                        │  index: hnsw          │
+                                        └───────────────────────┘
+                                                    ^
+  <b>ONLINE — ask.py</b>   (run per question)             │
+                                                    │
+    question ──&gt; MiniLM ──&gt; query vector ───────────┘
+                                 │
+                                 v
+                 SELECT ... ORDER BY embedding &lt;=&gt; qvec LIMIT k
+                                 │
+                                 v
+                     grounded prompt ──&gt; LLM ──&gt; answer + used_sources
+</div>
+
+<p>
+شکل کلی <b>دقیقاً همون پروژه ۱۶</b> ـه. فقط جعبه‌ی وسط عوض شده.
+اگه چیزی جز اون جعبه تغییر کرد، یعنی داری بیش از حد بازنویسی می‌کنی.
+</p>
+
+<h2>۵. اتصال از پایتون</h2>
+
+<p>
+از <code>psycopg</code> نسخه ۳ استفاده می‌کنیم (نه <code>psycopg2</code>). یه نکته‌ی مهم داره:
+پایتون بردار رو به‌صورت <code>list[float]</code> داره، Postgres نوع <code>vector</code> می‌خواد.
+پکیج <code>pgvector</code> این ترجمه رو انجام می‌ده:
+</p>
+
+<pre><span class="k">import</span> <span class="v">psycopg</span>
+<span class="k">from</span> <span class="v">pgvector.psycopg</span> <span class="k">import</span> <span class="f">register_vector</span>
+
+conn <span class="o">=</span> <span class="v">psycopg</span><span class="o">.</span><span class="f">connect</span><span class="o">(</span><span class="v">DATABASE_URL</span><span class="o">)</span>
+<span class="v">conn</span><span class="o">.</span><span class="f">execute</span><span class="o">(</span><span class="s">"CREATE EXTENSION IF NOT EXISTS vector"</span><span class="o">)</span>
+<span class="f">register_vector</span><span class="o">(</span>conn<span class="o">)</span>   <span class="c"># now a Python list[float] can be passed as a vector param</span></pre>
+
+<div class="panel bad">
+  <div class="title">ترتیب مهمه</div>
+  <code>register_vector</code> باید <b>بعد از</b> ساخته شدن افزونه صدا زده بشه.
+  اگه قبلش صدا بزنی، خطای «type vector does not exist» می‌گیری —
+  چون داره دنبال نوعی می‌گرده که هنوز وجود نداره.
+</div>
+
+<h2>۶. جدول تناظر Chroma ↔ pgvector</h2>
+
+<table>
+  <tr><th>کاری که می‌کردی</th><th>Chroma</th><th>pgvector</th></tr>
+  <tr><td>ساخت انبار</td><td class="ltr"><code>get_or_create_collection()</code></td><td class="ltr"><code>CREATE TABLE</code></td></tr>
+  <tr><td>پاک‌کردن کامل</td><td class="ltr"><code>delete_collection()</code></td><td class="ltr"><code>TRUNCATE chunks</code></td></tr>
+  <tr><td>افزودن چانک‌ها</td><td class="ltr"><code>collection.add(...)</code></td><td class="ltr"><code>INSERT INTO chunks</code></td></tr>
+  <tr><td>جستجو</td><td class="ltr"><code>collection.query(...)</code></td><td class="ltr"><code>ORDER BY … LIMIT</code></td></tr>
+  <tr><td>انتخاب cosine</td><td class="ltr"><code>{"hnsw":{"space":"cosine"}}</code></td><td class="ltr"><code>&lt;=&gt;</code> + <code>vector_cosine_ops</code></td></tr>
+  <tr><td>فیلتر metadata</td><td class="ltr"><code>where={"source": "..."}</code></td><td class="ltr"><code>WHERE source = …</code></td></tr>
+  <tr><td>شمارش</td><td class="ltr"><code>collection.count()</code></td><td class="ltr"><code>SELECT count(*)</code></td></tr>
+  <tr><td>حذف چانک‌های یک فایل</td><td class="ltr"><code>collection.delete(where=…)</code></td><td class="ltr"><code>DELETE … WHERE source = …</code></td></tr>
+</table>
+
+<h2>۷. RecursiveCharacterTextSplitter</h2>
+
+<p>
+تو پروژه ۱۶ خودت <code>chunk_text</code> و <code>find_boundary</code> رو نوشتی —
+اون آبشار <code>rfind</code> روی <code>["\n\n", "\n", " "]</code>.
+</p>
+
+<p>
+<code>RecursiveCharacterTextSplitter</code> <b>دقیقاً همون کار رو می‌کنه</b>.
+لیست جداکننده‌ها رو به ترتیب امتحان می‌کنه، از بزرگ‌ترین واحد معنایی به کوچک‌ترین،
+تا وقتی تکه به اندازه‌ی مجاز برسه.
+</p>
+
+<div class="panel note">
+  <div class="title">چرا حالا استفاده ازش درسته و قبلاً نبود</div>
+  چون خودت یک‌بار نوشتیش. حالا وقتی جواب عجیب می‌ده، می‌دونی چرا و کجا رو نگاه کنی.
+  اگه از اول ازش استفاده کرده بودی، یه جعبه‌ی سیاه بود.
+  <b>این میانبر نیست، این قدم بعدیه.</b>
+</div>
+
+<pre><span class="k">from</span> <span class="v">langchain_text_splitters</span> <span class="k">import</span> <span class="t">RecursiveCharacterTextSplitter</span>
+
+splitter <span class="o">=</span> <span class="t">RecursiveCharacterTextSplitter</span><span class="o">(</span>
+    <span class="v">chunk_size</span><span class="o">=</span><span class="n">500</span><span class="o">,</span>
+    <span class="v">chunk_overlap</span><span class="o">=</span><span class="n">100</span><span class="o">,</span>
+    <span class="v">separators</span><span class="o">=[</span><span class="s">"\n\n"</span><span class="o">,</span> <span class="s">"\n"</span><span class="o">,</span> <span class="s">" "</span><span class="o">,</span> <span class="s">""</span><span class="o">],</span>
+    <span class="v">length_function</span><span class="o">=</span><span class="f">len</span><span class="o">,</span>          <span class="c"># characters, same unit as Project 16</span>
+<span class="o">)</span>
+
+chunks<span class="o">:</span> <span class="t">list</span><span class="o">[</span><span class="t">str</span><span class="o">]</span> <span class="o">=</span> <span class="v">splitter</span><span class="o">.</span><span class="f">split_text</span><span class="o">(</span>text<span class="o">)</span></pre>
+
+<p>
+اولین کاری که باید بکنی: با همون ۴ فایل markdown پروژه ۱۶ اجراش کن و ببین
+<b>۱۹ چانک</b> می‌ده یا نه. اگه عدد فرق کرد، بفهم چرا — این خودش نصف یادگیری این بخشه.
+</p>
+
+<h2>۸. واژه‌نامه</h2>
+
+<table>
+  <tr><th>واژه</th><th>یعنی چی</th></tr>
+  <tr><td class="ltr">extension</td><td>افزونه‌ای که به Postgres نوع، تابع یا عملگر جدید اضافه می‌کنه</td></tr>
+  <tr><td class="ltr">opclass</td><td>«operator class» — به ایندکس می‌گه با کدوم عملگر کار می‌کنه</td></tr>
+  <tr><td class="ltr">KNN</td><td>K Nearest Neighbors — پیدا کردن k تا نزدیک‌ترین بردار</td></tr>
+  <tr><td class="ltr">ANN</td><td>Approximate NN — نسخه‌ی تقریبی و سریع KNN</td></tr>
+  <tr><td class="ltr">HNSW</td><td>یه ساختار گرافی چندلایه برای ANN. سریع، ولی ساختش کند و حافظه‌بره</td></tr>
+  <tr><td class="ltr">IVFFlat</td><td>بردارها رو خوشه‌بندی می‌کنه و فقط چند خوشه رو می‌گرده</td></tr>
+  <tr><td class="ltr">recall</td><td>چند درصد از جواب‌های واقعاً درست رو برگردوند</td></tr>
+  <tr><td class="ltr">Seq Scan</td><td>خوندن کل جدول. تو خروجی <code>EXPLAIN</code> یعنی ایندکس استفاده نشده</td></tr>
+</table>
+
+<hr>
+
+<h2>۹. قبل از اینکه کد بزنی</h2>
+
+<p>این چهار تا رو انجام بده. هیچ‌کدوم پایتون نمی‌خواد:</p>
+
+<ol>
+  <li><span class="kbd">docker compose up -d</span> و مطمئن شو کانتینر بالاست.</li>
+  <li>با <code>psql</code> وصل شو و افزونه رو بساز.</li>
+  <li>یه جدول کوچیک آزمایشی با <code>vector(3)</code> بساز، سه‌تا سطر دستی <code>INSERT</code> کن.</li>
+  <li>با <code>&lt;=&gt;</code> کوئری بزن و ببین ترتیب همونیه که انتظار داری.</li>
+</ol>
+
+<p>
+با <code>vector(3)</code> کار کن نه ۳۸۴ — چون می‌تونی اعداد رو با ذهن خودت حساب کنی
+و بفهمی جواب درسته یا نه. این تنها جاییه که می‌تونی خروجی موتور رو با دست چک کنی.
+از دستش نده.
+</p>
+
+</div>
+</body>
+</html>
